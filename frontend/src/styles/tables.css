@@ -1,0 +1,43 @@
+/* Table Modern Styling */
+.table-card {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.table-responsive {
+  border-radius: var(--radius-lg);
+  margin-bottom: 0;
+}
+
+.table {
+  margin-bottom: 0;
+  border-color: var(--border-color);
+  font-size: 0.875rem;
+}
+
+.table > :not(caption) > * > * {
+  padding: 14px 18px;
+  vertical-align: middle;
+}
+
+.table thead th {
+  background-color: #F8FAFC !important;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.table tbody tr {
+  transition: var(--transition);
+}
+
+.table tbody tr:hover {
+  background-color: #F1F5F9 !important;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+  background-color: rgba(248, 250, 252, 0.5);
+}
