@@ -54,13 +54,13 @@ function Sidebar({ isOpen, toggleSidebar }) {
             {/* Sidebar Drawer */}
             <aside className={`sidebar-container ${isOpen ? "open" : ""}`}>
                 {/* Header / Brand */}
-                <div className="d-flex align-items-center justify-content-between px-4 py-3 border-bottom border-secondary border-opacity-25">
+                <div className="d-flex align-items-center justify-content-between px-4 py-3 border-bottom border-secondary border-opacity-25" style={{ height: "var(--navbar-height)" }}>
                     <Link to="/dashboard" className="d-flex align-items-center gap-3 text-white text-decoration-none">
                         <img
                             src={logo}
                             alt="EduNest Logo"
-                            width="40"
-                            height="40"
+                            width="38"
+                            height="38"
                             className="rounded-3 shadow-sm"
                         />
                         <div>
@@ -75,7 +75,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
 
                     {/* Mobile Close Button */}
                     <button
-                        className="btn btn-sm text-secondary d-lg-none p-1"
+                        className="btn btn-sm text-secondary d-lg-none p-1 border-0"
                         onClick={toggleSidebar}
                         aria-label="Close Sidebar"
                     >

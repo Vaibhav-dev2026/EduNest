@@ -54,13 +54,13 @@ function Navbar({ toggleSidebar }) {
     const resolvedPhoto = photoUrl ? getFileUrl(photoUrl) : null;
 
     return (
-        <header className="navbar navbar-expand bg-white border-bottom border-secondary border-opacity-10 fixed-top px-3 px-lg-4" style={{ height: "70px", zIndex: 1030 }}>
-            <div className="container-fluid p-0 d-flex align-items-center justify-content-between">
+        <header className="navbar navbar-expand bg-white border-bottom border-secondary border-opacity-10 fixed-top px-3 px-lg-4" style={{ height: "var(--navbar-height)", zIndex: 1030 }}>
+            <div className="container-fluid p-0 d-flex align-items-center justify-content-between flex-nowrap">
                 
-                {/* Left Side: Mobile Toggle & Brand/Breadcrumb */}
-                <div className="d-flex align-items-center gap-3">
+                {/* Left Side: Mobile Toggle & Brand/Badge */}
+                <div className="d-flex align-items-center gap-2 gap-sm-3 flex-shrink-0">
                     <button
-                        className="btn btn-light d-lg-none p-2 border-0"
+                        className="btn btn-light d-lg-none p-1.5 p-sm-2 border-0"
                         onClick={toggleSidebar}
                         aria-label="Toggle Sidebar"
                     >
@@ -71,12 +71,12 @@ function Navbar({ toggleSidebar }) {
                         <img
                             src={logo}
                             alt="EduNest"
-                            width="36"
-                            height="36"
-                            className="rounded-2 d-lg-none"
+                            width="34"
+                            height="34"
+                            className="rounded-2 d-lg-none shadow-xs"
                         />
                         <div>
-                            <span className="badge bg-primary-subtle text-primary fw-semibold px-2.5 py-1 rounded-pill" style={{ fontSize: "0.75rem" }}>
+                            <span className="badge bg-primary-subtle text-primary fw-semibold px-2 px-sm-2.5 py-1 rounded-pill text-nowrap" style={{ fontSize: "clamp(0.7rem, 1.2vw, 0.775rem)" }}>
                                 <i className="bi bi-shield-check me-1"></i> {capitalize(user.role) || "Admin"} Portal
                             </span>
                         </div>
@@ -84,40 +84,42 @@ function Navbar({ toggleSidebar }) {
                 </div>
 
                 {/* Right Side: Quick Action, Notifications, User */}
-                <div className="d-flex align-items-center gap-2 gap-sm-3">
+                <div className="d-flex align-items-center gap-2 gap-sm-3 flex-shrink-0">
                     
                     {/* Notification Bell */}
-                    <button className="btn btn-light rounded-circle position-relative p-2 d-flex align-items-center justify-content-center" style={{ width: "38px", height: "38px" }}>
+                    <button className="btn btn-light rounded-circle position-relative p-0 d-flex align-items-center justify-content-center" style={{ width: "36px", height: "36px" }} aria-label="Notifications">
                         <i className="bi bi-bell text-secondary fs-5"></i>
                         <span className="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
                             <span className="visually-hidden">New alerts</span>
                         </span>
                     </button>
 
-                    {/* Quick Profile Link */}
-                    <div className="vr my-2 mx-1 opacity-25"></div>
+                    {/* Divider */}
+                    <div className="vr my-2 mx-0 mx-sm-1 opacity-25 d-none d-sm-block"></div>
 
-                    <Link to={profileLink} className="d-flex align-items-center gap-2.5 text-decoration-none text-dark hover-opacity">
+                    {/* Quick Profile Link */}
+                    <Link to={profileLink} className="d-flex align-items-center gap-2 text-decoration-none text-dark hover-opacity" title="View Profile">
                         {resolvedPhoto && !imgError ? (
                             <img
                                 src={resolvedPhoto}
                                 alt={user.fullName || "User Avatar"}
                                 className="rounded-circle object-fit-cover shadow-sm border border-2 border-primary border-opacity-25"
-                                style={{ width: "38px", height: "38px" }}
+                                style={{ width: "36px", height: "36px", minWidth: "36px" }}
                                 onError={() => setImgError(true)}
                             />
                         ) : (
-                            <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style={{ width: "38px", height: "38px", fontSize: "0.9rem", textTransform: 'uppercase' }}>
+                            <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style={{ width: "36px", height: "36px", minWidth: "36px", fontSize: "0.85rem", textTransform: 'uppercase' }}>
                                 {user.firstName ? user.firstName[0] : (user.role ? user.role[0] : "U")}
                             </div>
                         )}
-                        <div className="d-none d-md-block text-start">
-                            <div className="fw-bold text-dark lh-1" style={{ fontSize: "0.875rem" }}>{user.fullName || capitalize(user.role) || "User"}</div>
-                            <small className="text-muted" style={{ fontSize: "0.725rem" }}>{capitalize(user.role) || "Role"}</small>
+                        <div className="d-none d-md-block text-start" style={{ maxWidth: "140px" }}>
+                            <div className="fw-bold text-dark text-truncate lh-1" style={{ fontSize: "0.85rem" }}>{user.fullName || capitalize(user.role) || "User"}</div>
+                            <small className="text-muted text-truncate d-block" style={{ fontSize: "0.725rem", marginTop: "2px" }}>{capitalize(user.role) || "Role"}</small>
                         </div>
                     </Link>
 
-                    <button className="btn btn-outline-danger btn-sm ms-1 ms-sm-2 px-2.5" onClick={handleLogout}>
+                    {/* Logout Button */}
+                    <button className="btn btn-outline-danger btn-sm px-2 px-sm-2.5 ms-1" onClick={handleLogout} title="Sign Out">
                         <i className="bi bi-box-arrow-right"></i>
                         <span className="d-none d-sm-inline ms-1">Logout</span>
                     </button>

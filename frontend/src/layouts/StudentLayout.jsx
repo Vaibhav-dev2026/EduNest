@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "../components/common/Navbar";
+import Footer from "../components/common/Footer";
 import { Link, useLocation } from "react-router-dom";
 import logo from "../assets/logo/logo.jpeg";
 import { getCurrentUser } from "../services/authService";
@@ -41,15 +42,15 @@ function StudentSidebar({ isOpen, toggleSidebar }) {
         <>
             <div className={`sidebar-backdrop ${isOpen ? "show" : ""}`} onClick={toggleSidebar}></div>
             <aside className={`sidebar-container ${isOpen ? "open" : ""}`}>
-                <div className="d-flex align-items-center justify-content-between px-4 py-3 border-bottom border-secondary border-opacity-25">
+                <div className="d-flex align-items-center justify-content-between px-4 py-3 border-bottom border-secondary border-opacity-25" style={{ height: "var(--navbar-height)" }}>
                     <Link to="/student/dashboard" className="d-flex align-items-center gap-3 text-white text-decoration-none">
-                        <img src={logo} alt="EduNest" width="40" height="40" className="rounded-3 shadow-sm" />
+                        <img src={logo} alt="EduNest" width="38" height="38" className="rounded-3 shadow-sm" />
                         <div>
                             <h5 className="m-0 fw-bold fs-5 text-white">EduNest</h5>
-                            <span className="text-secondary small fw-medium">Student Portal</span>
+                            <span className="text-secondary small fw-medium" style={{ fontSize: "0.725rem", color: "#94A3B8" }}>Student Portal</span>
                         </div>
                     </Link>
-                    <button className="btn btn-sm text-secondary d-lg-none p-1" onClick={toggleSidebar}>
+                    <button className="btn btn-sm text-secondary d-lg-none p-1 border-0" onClick={toggleSidebar}>
                         <i className="bi bi-x-lg fs-5"></i>
                     </button>
                 </div>
@@ -62,7 +63,12 @@ function StudentSidebar({ isOpen, toggleSidebar }) {
                                     <Link
                                         to={item.path}
                                         onClick={() => isOpen && toggleSidebar()}
-                                        className={`nav-link d-flex align-items-center gap-3 px-3 py-2.5 rounded-3 fw-medium ${active ? "bg-primary text-white" : "text-secondary hover-text-white hover-bg-dark"}`}
+                                        className={`nav-link d-flex align-items-center gap-3 px-3 py-2.5 rounded-3 fw-medium ${active ? "bg-primary text-white shadow-sm" : "text-secondary hover-text-white hover-bg-dark"}`}
+                                        style={{
+                                            color: active ? "#FFFFFF" : "#94A3B8",
+                                            backgroundColor: active ? "var(--primary)" : "transparent",
+                                            fontSize: "0.9rem"
+                                        }}
                                     >
                                         <i className={`bi ${item.icon} fs-5 ${active ? "text-white" : "text-secondary"}`}></i>
                                         <span>{item.label}</span>
@@ -100,17 +106,21 @@ function StudentSidebar({ isOpen, toggleSidebar }) {
 
 function StudentLayout({ children }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+    const toggleSidebar = () => {
+        setIsSidebarOpen((prev) => !prev);
+    };
+
     return (
-        <div className="d-flex flex-column vh-100 bg-light">
-            <Navbar toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
-            <div className="d-flex flex-grow-1 overflow-hidden">
-                <StudentSidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(false)} />
-                <main className="flex-grow-1 p-3 p-lg-4 overflow-y-auto" style={{ marginTop: "70px" }}>
-                    <div className="container-fluid p-0 max-w-1200 mx-auto">
-                        {children}
-                    </div>
-                </main>
-            </div>
+        <div className="admin-layout-wrapper">
+            <Navbar toggleSidebar={toggleSidebar} />
+            <StudentSidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+            <main className="main-content">
+                <div className="main-content-inner animate-fade-in">
+                    {children}
+                </div>
+                <Footer />
+            </main>
         </div>
     );
 }

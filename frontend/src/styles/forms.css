@@ -1,9 +1,10 @@
-/* Form Styling */
+/* Form Responsive & Modern Styling */
 .form-label {
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.84rem;
   color: var(--text-dark);
   margin-bottom: 6px;
+  display: inline-block;
 }
 
 .form-label .required-star {
@@ -13,40 +14,59 @@
 
 .form-control, .form-select {
   font-family: var(--font-family);
-  font-size: 0.9rem;
-  padding: 10px 14px;
+  font-size: 0.885rem;
+  padding: 9px 13px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
   background-color: #ffffff;
   color: var(--text-dark);
-  transition: var(--transition);
+  transition: var(--transition-fast);
+  width: 100%;
+  max-width: 100%;
 }
 
 .form-control:focus, .form-select:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.14);
   background-color: #ffffff;
 }
 
 .form-control::placeholder {
   color: #94A3B8;
-  font-size: 0.875rem;
+  font-size: 0.85rem;
 }
 
 textarea.form-control {
-  min-height: 100px;
+  min-height: 95px;
+  resize: vertical;
 }
 
 /* Custom Input Groups */
+.input-group {
+  width: 100%;
+  max-width: 100%;
+  flex-wrap: nowrap;
+}
+
 .input-group-text {
   background-color: #F8FAFC;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   color: var(--text-muted);
+  font-size: 0.885rem;
 }
 
 .form-control:read-only {
-  background-color: #F1F5F9;
+  background-color: #F8FAFC;
   color: #64748B;
   cursor: not-allowed;
+}
+
+/* Validation Feedback */
+.invalid-feedback,
+small.text-danger {
+  font-size: 0.775rem;
+  font-weight: 500;
+  margin-top: 4px;
+  display: block;
 }

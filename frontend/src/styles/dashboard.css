@@ -1,27 +1,33 @@
-/* Dashboard Cards Modern Styling */
+/* Dashboard Cards Modern Responsive Styling */
 .stat-card {
   position: relative;
   overflow: hidden;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-color);
   background: #ffffff;
-  padding: 24px;
-  transition: var(--transition);
+  padding: clamp(16px, 2vw, 24px);
+  transition: var(--transition-fast);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .stat-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-3px);
   box-shadow: var(--shadow-hover);
 }
 
 .stat-icon-wrapper {
-  width: 52px;
-  height: 52px;
+  width: clamp(42px, 3.5vw, 50px);
+  height: clamp(42px, 3.5vw, 50px);
+  min-width: 42px;
+  min-height: 42px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: clamp(1.2rem, 1.8vw, 1.45rem);
 }
 
 .icon-purple {
@@ -45,13 +51,14 @@
 }
 
 .stat-trend {
-  font-size: 0.775rem;
+  font-size: 0.75rem;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
+  gap: 3px;
+  padding: 3px 8px;
   border-radius: var(--radius-pill);
+  white-space: nowrap;
 }
 
 .trend-up {

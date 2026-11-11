@@ -1,4 +1,4 @@
-/* Table Modern Styling */
+/* Table Modern Responsive Styling */
 .table-card {
   border-radius: var(--radius-lg);
   overflow: hidden;
@@ -7,16 +7,25 @@
 .table-responsive {
   border-radius: var(--radius-lg);
   margin-bottom: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+  border: 1px solid var(--border-color);
+  background: #ffffff;
 }
 
 .table {
   margin-bottom: 0;
   border-color: var(--border-color);
   font-size: 0.875rem;
+  width: 100%;
+  min-width: 600px; /* Ensures tabular alignment without squeezing content */
 }
 
 .table > :not(caption) > * > * {
-  padding: 14px 18px;
+  padding: 13px 16px;
   vertical-align: middle;
 }
 
@@ -25,19 +34,26 @@
   color: var(--text-muted);
   font-weight: 700;
   text-transform: uppercase;
-  font-size: 0.75rem;
+  font-size: 0.725rem;
   letter-spacing: 0.05em;
   border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
 }
 
 .table tbody tr {
-  transition: var(--transition);
+  transition: var(--transition-fast);
 }
 
 .table tbody tr:hover {
-  background-color: #F1F5F9 !important;
+  background-color: #F8FAFC !important;
 }
 
 .table-striped > tbody > tr:nth-of-type(odd) > * {
-  background-color: rgba(248, 250, 252, 0.5);
+  background-color: rgba(248, 250, 252, 0.45);
+}
+
+/* Action button groupings in tables */
+.table td .d-inline-flex,
+.table td .d-flex {
+  flex-wrap: nowrap;
 }
