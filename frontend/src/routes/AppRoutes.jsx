@@ -52,10 +52,12 @@ import MyFees from "../pages/StudentPanel/MyFees";
 import StudentMaterials from "../pages/StudentPanel/StudentMaterials";
 import StudentNotices from "../pages/StudentPanel/StudentNotices";
 import StudentProfile from "../pages/StudentPanel/StudentProfile";
+import ScrollToTop from "../components/common/ScrollToTop";
 
 function AppRoutes() {
     return (
         <BrowserRouter>
+            <ScrollToTop />
             <Routes>
                 {/* AUTH ROUTES */}
                 <Route path="/" element={<Navigate to="/login" />} />

@@ -91,7 +91,7 @@ function Navbar() {
                         title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
                         aria-label={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
                     >
-                        <i className={`bi ${isCollapsed ? "bi-layout-sidebar-inset" : "bi-layout-sidebar-inset-reverse"} fs-5 text-secondary`}></i>
+                        <i className={`bi ${isCollapsed ? "bi-chevron-right" : "bi-chevron-left"} fs-6 text-secondary`}></i>
                     </button>
 
                     <div className="d-flex align-items-center gap-2">

@@ -8,7 +8,7 @@ import { getFileUrl } from "../services/api";
 import { useSidebar } from "../context/SidebarContext";
 
 function StudentSidebar() {
-    const { isCollapsed, isMobileOpen, closeMobile } = useSidebar();
+    const { isCollapsed, toggleCollapse, isMobileOpen, closeMobile } = useSidebar();
     const location = useLocation();
     const [user, setUser] = useState(getCurrentUser() || {});
     const [imgError, setImgError] = useState(false);
@@ -26,7 +26,6 @@ function StudentSidebar() {
         };
     }, []);
 
-    // Close mobile drawer on Escape key
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.key === "Escape" && isMobileOpen) closeMobile();
@@ -45,7 +44,6 @@ function StudentSidebar() {
     ];
 
     const isActive = (path) => location.pathname.startsWith(path);
-
     const photoUrl = user.profilePhoto || user.photo;
     const resolvedPhoto = photoUrl ? getFileUrl(photoUrl) : null;
 
@@ -53,20 +51,34 @@ function StudentSidebar() {
         <>
             <div className={`sidebar-backdrop ${isMobileOpen ? "show" : ""}`} onClick={closeMobile} aria-hidden="true"></div>
             <aside className={`sidebar-container ${isMobileOpen ? "open" : ""} ${isCollapsed ? "sidebar--collapsed" : ""}`}>
-                <div className="d-flex align-items-center justify-content-between px-3 border-bottom border-secondary border-opacity-25" style={{ height: "var(--navbar-height)", overflow: "hidden" }}>
-                    <Link to="/student/dashboard" className="d-flex align-items-center gap-2.5 text-white text-decoration-none" title="EduNest Home">
-                        <img src={logo} alt="EduNest" width="36" height="36" className="rounded-3 shadow-sm flex-shrink-0" />
-                        {!isCollapsed && (
-                            <div className="text-nowrap sidebar-brand-text animate-fade-in">
-                                <h5 className="m-0 fw-bold fs-5 text-white">EduNest</h5>
-                                <span className="text-secondary small fw-medium" style={{ fontSize: "0.7rem", color: "#94A3B8" }}>Student Portal</span>
+                {/* Header / Brand */}
+                <div
+                    className="d-flex align-items-center justify-content-between border-bottom border-secondary border-opacity-25"
+                    style={{ height: "var(--navbar-height)", padding: isCollapsed ? "0 10px" : "0 14px", overflow: "hidden" }}
+                >
+                    <Link to="/student/dashboard" className="d-flex align-items-center gap-2 text-white text-decoration-none overflow-hidden" title="EduNest Home">
+                        <img
+                            src={logo}
+                            alt="EduNest Logo"
+                            className="rounded-2 shadow-sm flex-shrink-0"
+                            style={{ width: isCollapsed ? "34px" : "38px", height: isCollapsed ? "34px" : "38px", objectFit: "cover", transition: "width 0.28s ease, height 0.28s ease" }}
+                        />
+                        <div className="sidebar-brand-text text-nowrap overflow-hidden">
+                            <div className="fw-bold lh-1" style={{ fontSize: "1rem", letterSpacing: "-0.02em" }}>
+                                <span style={{ color: "#FFFFFF" }}>Edu</span>
+                                <span style={{ color: "#F97316" }}>Nest</span>
                             </div>
-                        )}
+                            <div className="sidebar-link-label" style={{ fontSize: "0.68rem", color: "#94A3B8", letterSpacing: "0.03em", marginTop: "2px" }}>
+                                Student Portal
+                            </div>
+                        </div>
                     </Link>
                     <button className="btn btn-sm text-secondary d-lg-none p-1 border-0" onClick={closeMobile}>
                         <i className="bi bi-x-lg fs-5"></i>
                     </button>
                 </div>
+
+                {/* Nav */}
                 <div className="px-2 py-3 overflow-y-auto flex-grow-1">
                     <ul className="nav flex-column gap-1">
                         {menuItems.map((item) => {
@@ -76,46 +88,46 @@ function StudentSidebar() {
                                     <Link
                                         to={item.path}
                                         onClick={closeMobile}
-                                        title={isCollapsed ? item.label : ""}
-                                        className={`nav-link d-flex align-items-center gap-3 px-3 py-2.5 rounded-3 fw-medium ${isCollapsed ? "justify-content-center px-2" : ""} ${active ? "bg-primary text-white shadow-sm" : "text-secondary hover-text-white hover-bg-dark"}`}
-                                        style={{
-                                            color: active ? "#FFFFFF" : "#94A3B8",
-                                            backgroundColor: active ? "var(--primary)" : "transparent",
-                                            fontSize: "0.9rem"
-                                        }}
+                                        title={item.label}
+                                        className={`nav-link d-flex align-items-center gap-3 rounded-3 fw-medium sidebar-nav-link ${isCollapsed ? "justify-content-center" : ""} ${active ? "active" : ""}`}
+                                        style={{ padding: isCollapsed ? "10px 8px" : "9px 14px", color: active ? "#FFFFFF" : "#94A3B8", backgroundColor: active ? "var(--primary)" : "transparent", fontSize: "0.9rem" }}
                                     >
-                                        <i className={`bi ${item.icon} fs-5 flex-shrink-0 ${active ? "text-white" : "text-secondary"}`}></i>
-                                        {!isCollapsed && <span className="text-nowrap sidebar-link-label">{item.label}</span>}
+                                        <i className={`bi ${item.icon} fs-5 flex-shrink-0`}></i>
+                                        <span className="sidebar-link-label text-nowrap">{item.label}</span>
                                     </Link>
                                 </li>
                             );
                         })}
                     </ul>
                 </div>
-                <div className="p-2.5 border-top border-secondary border-opacity-25 bg-dark bg-opacity-50">
-                    <Link to="/student/profile" className={`d-flex align-items-center gap-2.5 text-decoration-none text-white ${isCollapsed ? "justify-content-center" : ""}`} title={isCollapsed ? (user.fullName || "Student Profile") : ""}>
+
+                {/* Footer */}
+                <div className="border-top border-secondary border-opacity-25" style={{ padding: isCollapsed ? "10px 8px" : "10px 14px", background: "rgba(0,0,0,0.3)" }}>
+                    <Link to="/student/profile" className={`d-flex align-items-center gap-2 text-decoration-none text-white ${isCollapsed ? "justify-content-center" : ""}`} title={user.fullName || "Student Profile"} onClick={closeMobile}>
                         {resolvedPhoto && !imgError ? (
-                            <img
-                                src={resolvedPhoto}
-                                alt={user.fullName || "Student"}
-                                className="rounded-circle object-fit-cover shadow-sm border border-secondary border-opacity-50 flex-shrink-0"
-                                style={{ width: "34px", height: "34px" }}
-                                onError={() => setImgError(true)}
-                            />
+                            <img src={resolvedPhoto} alt={user.fullName || "Student"} className="rounded-circle object-fit-cover shadow-sm border border-secondary border-opacity-50 flex-shrink-0" style={{ width: "34px", height: "34px", minWidth: "34px" }} onError={() => setImgError(true)} />
                         ) : (
-                            <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style={{ width: "34px", height: "34px" }}>
+                            <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style={{ width: "34px", height: "34px", minWidth: "34px", fontSize: "0.85rem" }}>
                                 {user.firstName ? user.firstName[0].toUpperCase() : "S"}
                             </div>
                         )}
-                        {!isCollapsed && (
-                            <div className="overflow-hidden text-nowrap sidebar-user-info">
-                                <div className="text-white small fw-semibold text-truncate">{user.fullName || "Student"}</div>
-                                <div className="text-secondary small text-truncate" style={{ fontSize: "0.72rem", color: "#64748B" }}>{user.email}</div>
-                            </div>
-                        )}
+                        <div className="overflow-hidden sidebar-brand-text">
+                            <div className="text-white small fw-semibold text-truncate lh-1">{user.fullName || "Student"}</div>
+                            <div className="small text-truncate" style={{ fontSize: "0.72rem", color: "#64748B", marginTop: "2px" }}>{user.email}</div>
+                        </div>
                     </Link>
                 </div>
             </aside>
+
+            {/* Desktop Collapse Toggle Button */}
+            <button
+                className="sidebar-collapse-btn d-none d-lg-flex"
+                onClick={toggleCollapse}
+                title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                aria-label={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            >
+                <i className={`bi ${isCollapsed ? "bi-chevron-right" : "bi-chevron-left"}`}></i>
+            </button>
         </>
     );
 }
@@ -138,3 +150,4 @@ function StudentLayout({ children }) {
 }
 
 export default StudentLayout;
+

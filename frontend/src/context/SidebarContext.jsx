@@ -23,6 +23,18 @@ export function SidebarProvider({ children }) {
         }
     }, [isCollapsed]);
 
+    // Lock body scrolling when mobile drawer is open to prevent background scroll
+    useEffect(() => {
+        if (isMobileOpen) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "";
+        }
+        return () => {
+            document.body.style.overflow = "";
+        };
+    }, [isMobileOpen]);
+
     const toggleCollapse = () => {
         setIsCollapsed(prev => !prev);
     };

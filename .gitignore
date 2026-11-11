@@ -16,3 +16,6 @@ logs/
 Thumbs.db
 
 .vscode/
+
+# Runtime uploads
+backend/uploads/
