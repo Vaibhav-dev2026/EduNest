@@ -1,0 +1,350 @@
+/* ============================================================= */
+/* EduNest Liquid Glass++ & Micro-Interaction Styling Architecture */
+/* Translucent spatial surfaces, specular highlights, refined glow */
+/* ============================================================= */
+
+/* ------------------------------------------------------------- */
+/* 1. Cursor Spotlight & Micro-Interactions */
+/* ------------------------------------------------------------- */
+.cursor-spotlight-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 99999;
+  overflow: hidden;
+}
+
+/* Ambient Radial Glow that smoothly follows pointer */
+.cursor-spotlight {
+  position: absolute;
+  top: -150px;
+  left: -150px;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(79, 70, 229, 0.08) 0%, rgba(99, 102, 241, 0.03) 40%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  will-change: transform;
+}
+
+/* Outer Fluid Trailing Ring with Liquid Glass Border */
+.cursor-ring {
+  position: absolute;
+  top: -18px;
+  left: -18px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(79, 70, 229, 0.45);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  opacity: 0;
+  transition: width 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+              height 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+              top 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+              left 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+              border-color 0.2s ease,
+              background-color 0.2s ease,
+              opacity 0.25s ease;
+  will-change: transform;
+  box-shadow: 0 0 12px rgba(79, 70, 229, 0.15), inset 0 0 4px rgba(255, 255, 255, 0.4);
+}
+
+.cursor-ring.cursor-ring--expanded {
+  top: -26px;
+  left: -26px;
+  width: 52px;
+  height: 52px;
+  border-color: rgba(79, 70, 229, 0.7);
+  background: rgba(79, 70, 229, 0.08);
+  box-shadow: 0 0 20px rgba(79, 70, 229, 0.25), inset 0 0 6px rgba(255, 255, 255, 0.6);
+}
+
+.cursor-ring.cursor-ring--click {
+  transform: scale(0.85);
+  border-color: var(--primary);
+  background: rgba(79, 70, 229, 0.2);
+}
+
+/* Center Precision Dot */
+.cursor-dot {
+  position: absolute;
+  top: -3.5px;
+  left: -3.5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.15s ease, background-color 0.2s ease;
+  will-change: transform;
+  box-shadow: 0 0 8px rgba(79, 70, 229, 0.5);
+}
+
+.cursor-dot.cursor-dot--hovered {
+  background-color: #4338ca;
+  transform: scale(1.4);
+}
+
+/* Subtle Click Ripple */
+.cursor-ripple {
+  position: absolute;
+  top: -20px;
+  left: -20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--primary);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cursor-ripple--active {
+  animation: cursorRippleAnim 0.45s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+@keyframes cursorRippleAnim {
+  0% {
+    transform: scale(0.2);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+/* Hide custom cursor on mobile touch */
+@media (hover: none) and (pointer: coarse) {
+  .cursor-spotlight-container {
+    display: none !important;
+  }
+}
+
+/* ------------------------------------------------------------- */
+/* 2. Liquid Glass++ Component Surfaces */
+/* ------------------------------------------------------------- */
+/* Premium Glass Card Surface */
+.glass-card,
+.card {
+  background: rgba(255, 255, 255, 0.88) !important;
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  border: 1px solid rgba(226, 232, 240, 0.85) !important;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05),
+              0 2px 6px -1px rgba(15, 23, 42, 0.03),
+              inset 0 1px 1px 0 rgba(255, 255, 255, 0.9) !important;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s ease;
+}
+
+.glass-card:hover,
+.card:hover {
+  border-color: rgba(99, 102, 241, 0.3) !important;
+  box-shadow: 0 12px 30px -4px rgba(79, 70, 229, 0.09),
+              0 4px 12px -2px rgba(15, 23, 42, 0.04),
+              inset 0 1px 2px 0 rgba(255, 255, 255, 1) !important;
+}
+
+/* Translucent Glass Header */
+.navbar.fixed-top,
+.app-navbar {
+  background: rgba(255, 255, 255, 0.82) !important;
+  backdrop-filter: blur(16px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(190%) !important;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8) !important;
+  box-shadow: 0 4px 20px -4px rgba(15, 23, 42, 0.03),
+              inset 0 -1px 0 0 rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Translucent Dark Glass Sidebar */
+.sidebar-container {
+  background: rgba(15, 23, 42, 0.95) !important;
+  backdrop-filter: blur(20px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(190%) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 8px 0 32px rgba(0, 0, 0, 0.22) !important;
+}
+
+/* Sidebar Nav Link Liquid Glass State */
+.sidebar-container .nav-link {
+  transition: all 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.sidebar-container .nav-link:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #ffffff !important;
+  transform: translateX(3px);
+}
+
+.sidebar-container .nav-link.bg-primary {
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.38), inset 0 1px 1px rgba(255, 255, 255, 0.3) !important;
+}
+
+/* ------------------------------------------------------------- */
+/* 3. Liquid Glass Interactive Stat Cards */
+/* ------------------------------------------------------------- */
+.stat-card {
+  background: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(226, 232, 240, 0.85) !important;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04),
+              inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
+  position: relative;
+}
+
+.stat-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgba(79, 70, 229, 0.5), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.stat-card:hover::after {
+  opacity: 1;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 14px 28px -4px rgba(79, 70, 229, 0.12),
+              inset 0 1px 2px rgba(255, 255, 255, 1) !important;
+}
+
+/* Glass Icon Bubble */
+.stat-icon-wrapper {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.7);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.stat-card:hover .stat-icon-wrapper {
+  transform: scale(1.08) rotate(2deg);
+}
+
+/* ------------------------------------------------------------- */
+/* 4. Glass Table & Data Container (High Contrast Protected) */
+/* ------------------------------------------------------------- */
+.table-responsive {
+  background: rgba(255, 255, 255, 0.92) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(226, 232, 240, 0.85) !important;
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.03),
+              inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+}
+
+.table thead th {
+  background: rgba(248, 250, 252, 0.92) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+.table tbody tr:hover {
+  background-color: rgba(238, 242, 255, 0.5) !important;
+}
+
+/* ------------------------------------------------------------- */
+/* 5. Liquid Glass Buttons & Inputs */
+/* ------------------------------------------------------------- */
+.btn-primary {
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.28),
+              inset 0 1px 1px rgba(255, 255, 255, 0.3) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.btn-primary:hover::before {
+  left: 100%;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 18px rgba(79, 70, 229, 0.38),
+              inset 0 1px 1px rgba(255, 255, 255, 0.4) !important;
+}
+
+.form-control,
+.form-select {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.03) !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+  background: #ffffff !important;
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18),
+              0 2px 8px rgba(99, 102, 241, 0.08) !important;
+}
+
+/* ------------------------------------------------------------- */
+/* 6. Scroll Reveal Transitions */
+/* ------------------------------------------------------------- */
+.scroll-reveal {
+  opacity: 0;
+  will-change: transform, opacity;
+  transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.scroll-reveal.reveal-up {
+  transform: translateY(18px);
+}
+
+.scroll-reveal.reveal-down {
+  transform: translateY(-18px);
+}
+
+.scroll-reveal.reveal-fade {
+  transform: none;
+}
+
+.scroll-reveal.reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .scroll-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .stat-card:hover,
+  .btn-primary:hover,
+  .card:hover {
+    transform: none !important;
+  }
+}

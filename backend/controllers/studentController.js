@@ -7,6 +7,7 @@ import {
     resolveReference,
     nextSequentialId
 } from "../utils/helpers.js";
+import { createNotification } from "./notificationController.js";
 
 async function enrichStudent(db, student, cache = {}) {
     const out = { ...student };
@@ -164,6 +165,16 @@ export async function addStudent(req, res) {
             loginCreated = true;
         }
     }
+
+    // Background notification for Admin and Teachers
+    createNotification(db, {
+        recipientRole: "admin",
+        title: "New Student Enrolled",
+        message: `${student.firstName} ${student.lastName} (${generatedId}) has been added.`,
+        type: "success",
+        link: "/students",
+        relatedId: generatedId
+    }).catch(err => console.error("Notification hook error:", err));
 
     res.status(201).json({
         success: true,

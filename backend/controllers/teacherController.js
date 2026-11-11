@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { getDB } from "../config/database.js";
 import { hashPassword } from "../utils/password.js";
 import { isValidObjectId, formatDateDDMMYYYY, nextSequentialId } from "../utils/helpers.js";
+import { createNotification } from "./notificationController.js";
 
 function enrichTeacher(t) {
     const out = { ...t };
@@ -116,6 +117,16 @@ export async function addTeacher(req, res) {
     teacher.updatedAt = new Date().toISOString();
 
     const result = await db.collection("teachers").insertOne(teacher);
+
+    // Fire admin notification in background (non-blocking)
+    createNotification(db, {
+        recipientRole: "admin",
+        title: `New Teacher Added: ${teacher.firstName} ${teacher.lastName}`,
+        message: `Teacher ${teacher.firstName} ${teacher.lastName} (${generatedId}) has been added to the system.`,
+        type: "success",
+        link: "/admin/teachers",
+        relatedId: generatedId
+    }).catch(err => console.error("Notification hook error:", err));
 
     // ── Also create a login account so the teacher can actually sign in ──
     let loginCreated = false;

@@ -1,21 +1,15 @@
-import { useState } from "react";
 import Navbar from "../components/common/Navbar";
 import Sidebar from "../components/common/Sidebar";
 import Footer from "../components/common/Footer";
+import { useSidebar } from "../context/SidebarContext";
 
 function AdminLayout({ children }) {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-    const toggleSidebar = () => {
-        setIsSidebarOpen((prev) => !prev);
-    };
+    const { isCollapsed } = useSidebar();
 
     return (
-        <div className="admin-layout-wrapper">
-            <Navbar toggleSidebar={toggleSidebar} />
-
-            <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-
+        <div className={`admin-layout-wrapper ${isCollapsed ? "layout--collapsed" : ""}`}>
+            <Navbar />
+            <Sidebar />
             <main className="main-content">
                 <div className="main-content-inner animate-fade-in">
                     {children}

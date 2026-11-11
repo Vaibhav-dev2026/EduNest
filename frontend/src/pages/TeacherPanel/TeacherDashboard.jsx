@@ -3,17 +3,17 @@ import { Link } from "react-router-dom";
 import TeacherLayout from "../../layouts/TeacherLayout";
 import PageHeader from "../../components/common/PageHeader";
 import Loader from "../../components/common/Loader";
+import ScrollReveal from "../../components/common/ScrollReveal";
 import { getCurrentUser } from "../../services/authService";
-import { getTeachers } from "../../services/teacherService";
-import { getStudents } from "../../services/studentService";
 import { getAttendance } from "../../services/attendanceService";
-import { getNotices } from "../../services/noticeService";
+import { getStudents } from "../../services/studentService";
 import { getMaterials } from "../../services/materialService";
+import { getNotices } from "../../services/noticeService";
+import { getTeachers } from "../../services/teacherService";
 import { getFileUrl } from "../../services/api";
 
 function TeacherDashboard() {
     const user = getCurrentUser() || {};
-
     const [loading, setLoading] = useState(true);
     const [dashboardData, setDashboardData] = useState({
         profile: null,
@@ -111,102 +111,142 @@ function TeacherDashboard() {
 
     return (
         <TeacherLayout>
-            <PageHeader title="Teacher Dashboard" subtitle="Overview of your classes and activities" />
+            <ScrollReveal direction="down" delay={50}>
+                <PageHeader title="Teacher Dashboard" subtitle="Overview of your classes and activities" />
+            </ScrollReveal>
 
             {loading ? <Loader text="Loading dashboard..." /> : (
                 <div className="row mt-4">
 
                     {/* Profile Summary Card */}
                     <div className="col-12 col-md-6 col-lg-4 mb-4">
-                        <div className="card shadow-sm border-0 h-100 position-relative">
-                            <div className="card-body text-center p-4">
-                                {resolvedPhoto ? (
-                                    <img
-                                        src={resolvedPhoto}
-                                        alt="Teacher"
-                                        className="rounded-circle object-fit-cover shadow-sm mb-3 border border-2 border-primary border-opacity-25"
-                                        style={{ width: "64px", height: "64px" }}
-                                    />
-                                ) : (
-                                    <div
-                                        className="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
-                                        style={{ width: "64px", height: "64px", fontSize: "24px" }}
-                                    >
-                                        {user.firstName ? user.firstName[0].toUpperCase() : "T"}
-                                    </div>
-                                )}
-                                <h5 className="fw-bold mb-1">
-                                    {profile ? `${profile.firstName} ${profile.lastName}` : (user.fullName || user.email || "Teacher")}
-                                </h5>
-                                <p className="text-muted small mb-1">{profile?.subject || "Subject N/A"}</p>
-                                <p className="text-muted small mb-2">{user.referenceId || "—"}</p>
-                                <span className={`badge ${profile?.status === "Active" || user.status === "Active" ? "bg-success" : "bg-warning"}`}>
-                                    {profile?.status || user.status || "Active"}
-                                </span>
+                        <ScrollReveal direction="up" delay={100} className="h-100">
+                            <div className="card shadow-sm border-0 h-100 position-relative glass-card">
+                                <div className="card-body text-center p-4">
+                                    {resolvedPhoto ? (
+                                        <img
+                                            src={resolvedPhoto}
+                                            alt="Teacher"
+                                            className="rounded-circle object-fit-cover shadow-sm mb-3 border border-2 border-primary border-opacity-25"
+                                            style={{ width: "68px", height: "68px" }}
+                                        />
+                                    ) : (
+                                        <div
+                                            className="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow-sm"
+                                            style={{ width: "68px", height: "68px", fontSize: "26px" }}
+                                        >
+                                            {user.firstName ? user.firstName[0].toUpperCase() : "T"}
+                                        </div>
+                                    )}
+                                    <h5 className="fw-bold mb-1 text-dark">
+                                        {profile ? `${profile.firstName} ${profile.lastName}` : (user.fullName || user.email || "Teacher")}
+                                    </h5>
+                                    <p className="text-muted small mb-1">{profile?.subject || "Subject N/A"}</p>
+                                    <p className="text-muted small mb-2">{user.referenceId || "—"}</p>
+                                    <span className={`badge ${profile?.status === "Active" || user.status === "Active" ? "badge-soft-success" : "badge-soft-warning"}`}>
+                                        {profile?.status || user.status || "Active"}
+                                    </span>
+                                </div>
+                                <Link to="/teacher/profile" className="stretched-link"></Link>
                             </div>
-                            <Link to="/teacher/profile" className="stretched-link"></Link>
-                        </div>
+                        </ScrollReveal>
                     </div>
 
                     {/* Total Students */}
                     <div className="col-12 col-md-6 col-lg-4 mb-4">
-                        <div className="card shadow-sm border-0 h-100 text-center p-4 bg-primary-subtle text-primary position-relative">
-                            <i className="bi bi-people-fill fs-1 mb-2"></i>
-                            <h3 className="fw-bold mb-1">{totalStudents}</h3>
-                            <p className="small mb-0">Total Students</p>
-                            <Link to="/teacher/my-students" className="stretched-link"></Link>
-                        </div>
+                        <ScrollReveal direction="up" delay={150} className="h-100">
+                            <div className="card shadow-sm border-0 h-100 text-center p-4 bg-primary-subtle text-primary position-relative glass-card">
+                                <div className="stat-icon-wrapper icon-purple mx-auto mb-3">
+                                    <i className="bi bi-people-fill"></i>
+                                </div>
+                                <h3 className="fw-bold mb-1">{totalStudents}</h3>
+                                <p className="small mb-0 text-muted fw-semibold">Total Students</p>
+                                <Link to="/teacher/my-students" className="stretched-link"></Link>
+                            </div>
+                        </ScrollReveal>
                     </div>
 
                     {/* Today's Attendance */}
                     <div className="col-12 col-md-6 col-lg-4 mb-4">
-                        <div className="card shadow-sm border-0 h-100 text-center p-4 bg-success-subtle text-success position-relative">
-                            <i className="bi bi-calendar-check-fill fs-1 mb-2"></i>
-                            <h3 className="fw-bold mb-1">{todayAttendanceCount}</h3>
-                            <p className="small mb-0">Attendance Marked Today</p>
-                            <Link to="/teacher/attendance" className="stretched-link"></Link>
-                        </div>
+                        <ScrollReveal direction="up" delay={200} className="h-100">
+                            <div className="card shadow-sm border-0 h-100 text-center p-4 bg-success-subtle text-success position-relative glass-card">
+                                <div className="stat-icon-wrapper icon-green mx-auto mb-3">
+                                    <i className="bi bi-calendar-check-fill"></i>
+                                </div>
+                                <h3 className="fw-bold mb-1">{todayAttendanceCount}</h3>
+                                <p className="small mb-0 text-muted fw-semibold">Today's Attendance Marked</p>
+                                <Link to="/teacher/attendance" className="stretched-link"></Link>
+                            </div>
+                        </ScrollReveal>
                     </div>
 
                     {/* Latest Notice */}
-                    <div className="col-12 col-md-6 mb-4">
-                        <div className="card shadow-sm border-0 h-100 p-4 position-relative">
-                            <h6 className="text-muted small fw-bold text-uppercase mb-3">
-                                <i className="bi bi-megaphone me-2"></i>Latest Notice
-                            </h6>
-                            {latestNotice ? (
-                                <div>
-                                    <h5 className="fw-bold text-primary mb-1 text-truncate">{latestNotice.title}</h5>
-                                    <p className="small text-muted mb-1">{latestNotice.dateFormatted || latestNotice.date || "Recent"}</p>
-                                    <p className="mb-0 text-truncate">{latestNotice.description}</p>
+                    <div className="col-12 col-lg-6 mb-4">
+                        <ScrollReveal direction="up" delay={250} className="h-100">
+                            <div className="card shadow-sm border-0 h-100 glass-card">
+                                <div className="card-header bg-transparent border-bottom d-flex align-items-center justify-content-between py-3">
+                                    <h6 className="fw-bold mb-0 text-dark">
+                                        <i className="bi bi-bell-fill text-warning me-2"></i>
+                                        Latest Notice
+                                    </h6>
+                                    <Link to="/teacher/notices" className="btn btn-sm btn-outline-primary">
+                                        View All
+                                    </Link>
                                 </div>
-                            ) : (
-                                <p className="text-muted mb-0">No notices available.</p>
-                            )}
-                            <Link to="/teacher/notices" className="stretched-link"></Link>
-                        </div>
+                                <div className="card-body p-4">
+                                    {latestNotice ? (
+                                        <div>
+                                            <div className="d-flex align-items-center justify-content-between mb-2">
+                                                <h6 className="fw-bold text-primary mb-0">{latestNotice.title}</h6>
+                                                <span className={`badge ${latestNotice.priority === 'High' ? 'badge-soft-danger' : latestNotice.priority === 'Medium' ? 'badge-soft-warning' : 'badge-soft-info'}`}>
+                                                    {latestNotice.priority}
+                                                </span>
+                                            </div>
+                                            <p className="text-muted small mb-2">{latestNotice.description}</p>
+                                            <small className="text-secondary">
+                                                <i className="bi bi-clock me-1"></i>
+                                                {latestNotice.dateFormatted || latestNotice.date || "Recently"}
+                                            </small>
+                                        </div>
+                                    ) : (
+                                        <p className="text-muted mb-0">No active notices.</p>
+                                    )}
+                                </div>
+                            </div>
+                        </ScrollReveal>
                     </div>
 
                     {/* Latest Study Material */}
-                    <div className="col-12 col-md-6 mb-4">
-                        <div className="card shadow-sm border-0 h-100 p-4 position-relative">
-                            <h6 className="text-muted small fw-bold text-uppercase mb-3">
-                                <i className="bi bi-file-earmark-text me-2"></i>Latest Material
-                            </h6>
-                            {latestMaterial ? (
-                                <div>
-                                    <h5 className="fw-bold text-warning mb-1 text-truncate">{latestMaterial.title}</h5>
-                                    <p className="small text-muted mb-1">
-                                        {latestMaterial.subject} &bull; {latestMaterial.uploadDateFormatted || latestMaterial.uploadDate || "Recent"}
-                                    </p>
-                                    <p className="mb-0 text-truncate">{latestMaterial.description}</p>
+                    <div className="col-12 col-lg-6 mb-4">
+                        <ScrollReveal direction="up" delay={300} className="h-100">
+                            <div className="card shadow-sm border-0 h-100 glass-card">
+                                <div className="card-header bg-transparent border-bottom d-flex align-items-center justify-content-between py-3">
+                                    <h6 className="fw-bold mb-0 text-dark">
+                                        <i className="bi bi-file-earmark-text-fill text-info me-2"></i>
+                                        Latest Study Material
+                                    </h6>
+                                    <Link to="/teacher/materials" className="btn btn-sm btn-outline-primary">
+                                        View All
+                                    </Link>
                                 </div>
-                            ) : (
-                                <p className="text-muted mb-0">No materials available.</p>
-                            )}
-                            <Link to="/teacher/materials" className="stretched-link"></Link>
-                        </div>
+                                <div className="card-body p-4">
+                                    {latestMaterial ? (
+                                        <div>
+                                            <h6 className="fw-bold text-dark mb-1">{latestMaterial.title}</h6>
+                                            <p className="text-muted small mb-2">{latestMaterial.description || latestMaterial.subject || "No description available"}</p>
+                                            <small className="text-secondary">
+                                                <i className="bi bi-calendar3 me-1"></i>
+                                                {latestMaterial.uploadDate || "Recently uploaded"}
+                                            </small>
+                                        </div>
+                                    ) : (
+                                        <p className="text-muted mb-0">No study materials uploaded yet.</p>
+                                    )}
+                                </div>
+                            </div>
+                        </ScrollReveal>
                     </div>
+
                 </div>
             )}
         </TeacherLayout>

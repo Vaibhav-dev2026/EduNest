@@ -3,8 +3,10 @@ import { Link, useLocation } from "react-router-dom";
 import logo from "../../assets/logo/logo.jpeg";
 import { getCurrentUser } from "../../services/authService";
 import { getFileUrl } from "../../services/api";
+import { useSidebar } from "../../context/SidebarContext";
 
-function Sidebar({ isOpen, toggleSidebar }) {
+function Sidebar() {
+    const { isCollapsed, isMobileOpen, closeMobile } = useSidebar();
     const location = useLocation();
     const [user, setUser] = useState(getCurrentUser() || {});
     const [imgError, setImgError] = useState(false);
@@ -21,6 +23,17 @@ function Sidebar({ isOpen, toggleSidebar }) {
             window.removeEventListener("storage", syncUser);
         };
     }, []);
+
+    // Close mobile drawer on Escape key
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === "Escape" && isMobileOpen) {
+                closeMobile();
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [isMobileOpen, closeMobile]);
 
     const menuItems = [
         { path: "/dashboard", label: "Dashboard", icon: "bi-grid-1x2-fill" },
@@ -45,38 +58,51 @@ function Sidebar({ isOpen, toggleSidebar }) {
 
     return (
         <>
-            {/* Mobile Backdrop */}
+            {/* Mobile Backdrop Overlay */}
             <div
-                className={`sidebar-backdrop ${isOpen ? "show" : ""}`}
-                onClick={toggleSidebar}
+                className={`sidebar-backdrop ${isMobileOpen ? "show" : ""}`}
+                onClick={closeMobile}
+                aria-hidden="true"
             ></div>
 
-            {/* Sidebar Drawer */}
-            <aside className={`sidebar-container ${isOpen ? "open" : ""}`}>
+            {/* Sidebar Drawer / Mini Rail */}
+            <aside
+                className={`sidebar-container ${isMobileOpen ? "open" : ""} ${isCollapsed ? "sidebar--collapsed" : ""}`}
+                aria-label="Admin Navigation"
+            >
                 {/* Header / Brand */}
-                <div className="d-flex align-items-center justify-content-between px-4 py-3 border-bottom border-secondary border-opacity-25" style={{ height: "var(--navbar-height)" }}>
-                    <Link to="/dashboard" className="d-flex align-items-center gap-3 text-white text-decoration-none">
+                <div
+                    className="d-flex align-items-center justify-content-between px-3 border-bottom border-secondary border-opacity-25"
+                    style={{ height: "var(--navbar-height)", overflow: "hidden" }}
+                >
+                    <Link
+                        to="/dashboard"
+                        className="d-flex align-items-center gap-2.5 text-white text-decoration-none"
+                        title="EduNest Home"
+                    >
                         <img
                             src={logo}
                             alt="EduNest Logo"
-                            width="38"
-                            height="38"
-                            className="rounded-3 shadow-sm"
+                            width="36"
+                            height="36"
+                            className="rounded-3 shadow-sm flex-shrink-0"
                         />
-                        <div>
-                            <h5 className="m-0 fw-bold fs-5 text-white" style={{ letterSpacing: "-0.02em" }}>
-                                EduNest
-                            </h5>
-                            <span className="text-secondary small fw-medium" style={{ fontSize: "0.725rem", color: "#94A3B8" }}>
-                                Management System
-                            </span>
-                        </div>
+                        {!isCollapsed && (
+                            <div className="sidebar-brand-text text-nowrap animate-fade-in">
+                                <h5 className="m-0 fw-bold fs-5 text-white" style={{ letterSpacing: "-0.02em" }}>
+                                    EduNest
+                                </h5>
+                                <span className="text-secondary small fw-medium" style={{ fontSize: "0.7rem", color: "#94A3B8" }}>
+                                    Management System
+                                </span>
+                            </div>
+                        )}
                     </Link>
 
                     {/* Mobile Close Button */}
                     <button
                         className="btn btn-sm text-secondary d-lg-none p-1 border-0"
-                        onClick={toggleSidebar}
+                        onClick={closeMobile}
                         aria-label="Close Sidebar"
                     >
                         <i className="bi bi-x-lg fs-5"></i>
@@ -84,10 +110,12 @@ function Sidebar({ isOpen, toggleSidebar }) {
                 </div>
 
                 {/* Navigation Menu */}
-                <div className="px-3 py-4 overflow-y-auto flex-grow-1">
-                    <div className="text-uppercase text-secondary px-3 mb-2 fw-semibold" style={{ fontSize: "0.68rem", letterSpacing: "0.08em", color: "#64748B" }}>
-                        Main Menu
-                    </div>
+                <div className="px-2 py-3 overflow-y-auto flex-grow-1">
+                    {!isCollapsed && (
+                        <div className="text-uppercase text-secondary px-3 mb-2 fw-semibold animate-fade-in text-nowrap" style={{ fontSize: "0.68rem", letterSpacing: "0.08em", color: "#64748B" }}>
+                            Main Menu
+                        </div>
+                    )}
 
                     <ul className="nav flex-column gap-1">
                         {menuItems.map((item) => {
@@ -96,8 +124,11 @@ function Sidebar({ isOpen, toggleSidebar }) {
                                 <li className="nav-item" key={item.path}>
                                     <Link
                                         to={item.path}
-                                        onClick={() => isOpen && toggleSidebar()}
+                                        onClick={closeMobile}
+                                        title={isCollapsed ? item.label : ""}
                                         className={`nav-link d-flex align-items-center gap-3 px-3 py-2.5 rounded-3 fw-medium transition-all ${
+                                            isCollapsed ? "justify-content-center px-2" : ""
+                                        } ${
                                             active
                                                 ? "bg-primary text-white shadow-sm"
                                                 : "text-secondary hover-text-white hover-bg-dark"
@@ -108,8 +139,10 @@ function Sidebar({ isOpen, toggleSidebar }) {
                                             fontSize: "0.9rem"
                                         }}
                                     >
-                                        <i className={`bi ${item.icon} fs-5 ${active ? "text-white" : "text-secondary"}`}></i>
-                                        <span>{item.label}</span>
+                                        <i className={`bi ${item.icon} fs-5 flex-shrink-0 ${active ? "text-white" : "text-secondary"}`}></i>
+                                        {!isCollapsed && (
+                                            <span className="text-nowrap sidebar-link-label">{item.label}</span>
+                                        )}
                                     </Link>
                                 </li>
                             );
@@ -118,25 +151,31 @@ function Sidebar({ isOpen, toggleSidebar }) {
                 </div>
 
                 {/* Sidebar Footer User Info */}
-                <div className="p-3 border-top border-secondary border-opacity-25 bg-dark bg-opacity-50">
-                    <Link to="/profile" className="d-flex align-items-center gap-3 text-decoration-none text-white">
+                <div className="p-2.5 border-top border-secondary border-opacity-25 bg-dark bg-opacity-50">
+                    <Link
+                        to="/profile"
+                        className={`d-flex align-items-center gap-2.5 text-decoration-none text-white ${isCollapsed ? "justify-content-center" : ""}`}
+                        title={isCollapsed ? (user.fullName || "Admin Profile") : ""}
+                    >
                         {resolvedPhoto && !imgError ? (
                             <img
                                 src={resolvedPhoto}
                                 alt={user.fullName || "Administrator"}
-                                className="rounded-circle object-fit-cover shadow-sm border border-secondary border-opacity-50"
-                                style={{ width: "36px", height: "36px" }}
+                                className="rounded-circle object-fit-cover shadow-sm border border-secondary border-opacity-50 flex-shrink-0"
+                                style={{ width: "34px", height: "34px" }}
                                 onError={() => setImgError(true)}
                             />
                         ) : (
-                            <div className="bg-primary bg-opacity-25 text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style={{ width: "36px", height: "36px" }}>
+                            <div className="bg-primary bg-opacity-25 text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style={{ width: "34px", height: "34px" }}>
                                 {user.firstName ? user.firstName[0].toUpperCase() : "A"}
                             </div>
                         )}
-                        <div className="overflow-hidden">
-                            <div className="text-white small fw-semibold text-truncate">{user.fullName || "Administrator"}</div>
-                            <div className="text-secondary small text-truncate" style={{ fontSize: "0.75rem", color: "#64748B" }}>{user.email || "admin@edunest.com"}</div>
-                        </div>
+                        {!isCollapsed && (
+                            <div className="overflow-hidden text-nowrap sidebar-user-info">
+                                <div className="text-white small fw-semibold text-truncate">{user.fullName || "Administrator"}</div>
+                                <div className="text-secondary small text-truncate" style={{ fontSize: "0.72rem", color: "#64748B" }}>{user.email || "admin@edunest.com"}</div>
+                            </div>
+                        )}
                     </Link>
                 </div>
             </aside>

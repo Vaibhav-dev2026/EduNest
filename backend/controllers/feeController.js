@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { getDB } from "../config/database.js";
 import { isValidObjectId, formatDateDDMMYYYY, resolveReference, nextSequentialId } from "../utils/helpers.js";
+import { createNotification } from "./notificationController.js";
 
 function computeAmounts(fee) {
     const total = Math.max(0, Number(fee.totalFee) || 0);
@@ -136,6 +137,21 @@ export async function addFee(req, res) {
 
     try {
         const result = await db.collection("fees").insertOne(fee);
+
+        // Fire student notification in background (non-blocking)
+        if (fee.studentId) {
+            const studentName = fee.studentName || fee.student || "Student";
+            createNotification(db, {
+                recipientId: String(fee.studentId),
+                recipientRole: "student",
+                title: "Fee Payment Recorded",
+                message: `Your fee payment of ₹${fee.paidFee} has been recorded. Receipt: ${receiptNo}.`,
+                type: fee.dueFee <= 0 ? "success" : "info",
+                link: "/student/fees",
+                relatedId: feeId
+            }).catch(err => console.error("Fee notification hook error:", err));
+        }
+
         res.status(201).json({
             success: true,
             message: "Fee Record Added Successfully",

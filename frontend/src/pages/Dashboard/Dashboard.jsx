@@ -5,6 +5,7 @@ import DashboardCards from "../../components/dashboard/DashboardCards";
 import Statistics from "../../components/dashboard/Statistics";
 import RecentActivities from "../../components/dashboard/RecentActivities";
 import Loader from "../../components/common/Loader";
+import ScrollReveal from "../../components/common/ScrollReveal";
 
 import { getStudents } from "../../services/studentService";
 import { getTeachers } from "../../services/teacherService";
@@ -95,18 +96,20 @@ function Dashboard() {
 
     return (
         <AdminLayout>
-            <div className="d-flex justify-content-between align-items-center mb-4">
-                <h2 className="fw-bold mb-0">
-                    Dashboard
-                </h2>
-                <button
-                    className="btn btn-sm btn-outline-primary shadow-sm"
-                    onClick={() => fetchDashboardData(false)}
-                    title="Refresh Dashboard Data"
-                >
-                    <i className="bi bi-arrow-clockwise me-1"></i> Refresh
-                </button>
-            </div>
+            <ScrollReveal direction="down" delay={50}>
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                    <h2 className="fw-bold mb-0">
+                        Dashboard
+                    </h2>
+                    <button
+                        className="btn btn-sm btn-outline-primary shadow-sm"
+                        onClick={() => fetchDashboardData(false)}
+                        title="Refresh Dashboard Data"
+                    >
+                        <i className="bi bi-arrow-clockwise me-1"></i> Refresh
+                    </button>
+                </div>
+            </ScrollReveal>
 
             {loading ? (
                 <Loader text="Loading live dashboard statistics..." />
@@ -117,30 +120,38 @@ function Dashboard() {
                 </div>
             ) : (
                 <>
-                    <DashboardCards
-                        students={students}
-                        teachers={teachers}
-                        courses={courses}
-                        batches={batches}
-                        fees={fees}
-                    />
+                    <ScrollReveal direction="up" delay={100}>
+                        <DashboardCards
+                            students={students}
+                            teachers={teachers}
+                            courses={courses}
+                            batches={batches}
+                            fees={fees}
+                        />
+                    </ScrollReveal>
 
                     <div className="row mt-4">
                         <div className="col-lg-6 mb-4 mb-lg-0">
-                            <Statistics
-                                students={students}
-                                courses={courses}
-                            />
+                            <ScrollReveal direction="up" delay={200}>
+                                <Statistics
+                                    students={students}
+                                    courses={courses}
+                                    teachers={teachers}
+                                    batches={batches}
+                                />
+                            </ScrollReveal>
                         </div>
 
                         <div className="col-lg-6">
-                            <RecentActivities
-                                students={students}
-                                fees={fees}
-                                attendance={attendance}
-                                materials={materials}
-                                notices={notices}
-                            />
+                            <ScrollReveal direction="up" delay={300}>
+                                <RecentActivities
+                                    students={students}
+                                    fees={fees}
+                                    attendance={attendance}
+                                    materials={materials}
+                                    notices={notices}
+                                />
+                            </ScrollReveal>
                         </div>
                     </div>
                 </>

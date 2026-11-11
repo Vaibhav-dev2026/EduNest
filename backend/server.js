@@ -18,6 +18,7 @@ import feeRoutes from "./routes/feeRoutes.js";
 import materialRoutes from "./routes/materialRoutes.js";
 import noticeRoutes from "./routes/noticeRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 
 dotenv.config();
 
@@ -167,6 +168,7 @@ app.use("/attendance", attendanceRoutes);
 app.use("/fees", feeRoutes);
 app.use("/materials", materialRoutes);
 app.use("/notices", noticeRoutes);
+app.use("/notifications", notificationRoutes);
 
 // ============================================================
 // /api aliases
@@ -180,6 +182,7 @@ app.use("/api/attendance", attendanceRoutes);
 app.use("/api/fees", feeRoutes);
 app.use("/api/materials", materialRoutes);
 app.use("/api/notices", noticeRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // ============================================================
 // 404 + Error handling

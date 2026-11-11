@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { getDB } from "../config/database.js";
 import { isValidObjectId, formatDateDDMMYYYY, nextSequentialId } from "../utils/helpers.js";
+import { createNotification } from "./notificationController.js";
 
 function getNoticeTimestamp(n) {
     if (!n) return 0;
@@ -71,6 +72,21 @@ export async function addNotice(req, res) {
     notice.status = notice.status || "Active";
 
     const result = await db.collection("notices").insertOne(notice);
+
+    // Notify audience safely in background
+    const audienceRole = notice.audience?.toLowerCase().includes("teacher")
+        ? "teacher"
+        : (notice.audience?.toLowerCase().includes("student") ? "student" : "all");
+
+    createNotification(db, {
+        recipientRole: audienceRole,
+        title: `Notice: ${notice.title}`,
+        message: notice.description ? notice.description.slice(0, 100) : "A new notice has been published.",
+        type: "info",
+        link: audienceRole === "student" ? "/student/notices" : (audienceRole === "teacher" ? "/teacher/notices" : "/notices"),
+        relatedId: generatedId
+    }).catch(err => console.error("Notification hook error:", err));
+
     res.status(201).json({ success: true, message: "Notice Added Successfully", insertedId: result.insertedId, noticeId: generatedId });
 }
 

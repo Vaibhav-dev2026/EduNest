@@ -3,155 +3,173 @@ import { Link, useNavigate } from "react-router-dom";
 import { login, setCurrentSession } from "../../services/authService";
 
 import AuthLayout from "../../layouts/AuthLayout";
-import Button from "../../components/common/Button";
-import Input from "../../components/common/Input";
 import logo from "../../assets/logo/logo.jpeg";
 
 function Login() {
     const navigate = useNavigate();
 
-    const [loginData, setLoginData] = useState({
-        email: "",
-        password: ""
-    });
-
+    const [loginData, setLoginData] = useState({ email: "", password: "" });
     const [errors, setErrors] = useState({});
+    const [showPassword, setShowPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleChange = (event) => {
-        const { name, value } = event.target;
-        setLoginData((previousData) => ({
-            ...previousData,
-            [name]: value
-        }));
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setLoginData(prev => ({ ...prev, [name]: value }));
+        // Clear field error on change
+        if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
     };
 
     const validateForm = () => {
-        let validationErrors = {};
-
-        if (loginData.email.trim() === "") {
+        const validationErrors = {};
+        if (!loginData.email.trim()) {
             validationErrors.email = "Email is required";
-        } else if (
-            !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(loginData.email)
-        ) {
+        } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(loginData.email)) {
             validationErrors.email = "Enter a valid email address";
         }
-
-        if (loginData.password.trim() === "") {
+        if (!loginData.password.trim()) {
             validationErrors.password = "Password is required";
         } else if (loginData.password.length < 6) {
             validationErrors.password = "Minimum 6 characters required";
         }
-
         setErrors(validationErrors);
         return Object.keys(validationErrors).length === 0;
     };
 
-    const handleSubmit = async (event) => {
-        event.preventDefault();
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!validateForm()) return;
 
-        if (validateForm()) {
-            try {
-                const response = await login(loginData);
-                setCurrentSession(response.token, response.user);
+        setIsLoading(true);
+        setErrors({});
+        try {
+            const response = await login(loginData);
+            setCurrentSession(response.token, response.user);
 
-                // Redirect based on role
-                if (response.user.role === "admin") {
-                    navigate("/dashboard");
-                } else if (response.user.role === "teacher") {
-                    navigate("/teacher/dashboard");
-                } else if (response.user.role === "student") {
-                    navigate("/student/dashboard");
-                } else {
-                    navigate("/login");
-                }
-            } catch (error) {
-                setErrors({ password: error.message || "Invalid Email or Password!" });
-            }
+            if (response.user.role === "admin") navigate("/dashboard");
+            else if (response.user.role === "teacher") navigate("/teacher/dashboard");
+            else if (response.user.role === "student") navigate("/student/dashboard");
+            else navigate("/login");
+        } catch (error) {
+            setErrors({ form: error.message || "Invalid email or password. Please try again." });
+        } finally {
+            setIsLoading(false);
         }
     };
 
     return (
         <AuthLayout>
             <div className="text-center mb-4">
-                <img
-                    src={logo}
-                    alt="EduNest Logo"
-                    width="90"
-                    className="mb-3"
-                />
-
-                <h2 className="fw-bold">EduNest</h2>
-                <p className="text-muted">Learn. Achieve. Inspire.</p>
+                <img src={logo} alt="EduNest Logo" width="90" className="mb-3 rounded-3 shadow-sm" />
+                <h2 className="fw-bold mb-1" style={{ color: "var(--text-dark)" }}>EduNest</h2>
+                <p className="text-muted small mb-0">Learn. Achieve. Inspire.</p>
             </div>
 
-            <h4 className="text-center mb-4">Administrator Login</h4>
+            <h5 className="text-center fw-semibold mb-4" style={{ color: "var(--text-dark)" }}>
+                Sign in to your account
+            </h5>
 
-            <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                    <label className="form-label">Email Address</label>
-                    <Input
-                        type="email"
-                        name="email"
-                        placeholder="Enter Email"
-                        value={loginData.email}
-                        onChange={handleChange}
-                    />
-                    {errors.email && (
-                        <small className="text-danger">{errors.email}</small>
-                    )}
+            {errors.form && (
+                <div className="alert alert-danger d-flex align-items-center gap-2 py-2 px-3 mb-3 rounded-3" role="alert">
+                    <i className="bi bi-exclamation-circle-fill flex-shrink-0"></i>
+                    <span className="small">{errors.form}</span>
                 </div>
+            )}
 
+            <form onSubmit={handleSubmit} noValidate>
+                {/* Email */}
                 <div className="mb-3">
-                    <label className="form-label">Password</label>
-                    <Input
-                        type="password"
-                        name="password"
-                        placeholder="Enter Password"
-                        value={loginData.password}
-                        onChange={handleChange}
-                    />
-                    {errors.password && (
-                        <small className="text-danger">{errors.password}</small>
-                    )}
-                </div>
-
-                <div className="d-flex justify-content-between align-items-center mb-4">
-                    <div className="form-check">
+                    <label className="form-label fw-medium small" htmlFor="login-email">
+                        Email Address
+                    </label>
+                    <div className="input-group">
+                        <span className="input-group-text bg-white border-end-0">
+                            <i className="bi bi-envelope text-muted"></i>
+                        </span>
                         <input
-                            className="form-check-input"
-                            type="checkbox"
-                            id="rememberMe"
+                            id="login-email"
+                            type="email"
+                            name="email"
+                            className={`form-control border-start-0 ps-0 ${errors.email ? "is-invalid" : ""}`}
+                            placeholder="you@example.com"
+                            value={loginData.email}
+                            onChange={handleChange}
+                            autoComplete="email"
+                            disabled={isLoading}
                         />
-                        <label
-                            className="form-check-label"
-                            htmlFor="rememberMe"
-                        >
-                            Remember Me
-                        </label>
                     </div>
+                    {errors.email && <div className="invalid-feedback d-block small">{errors.email}</div>}
+                </div>
 
-                    <Link
-                        to="/forgot-password"
-                        className="text-decoration-none"
-                    >
-                        Forgot Password?
+                {/* Password */}
+                <div className="mb-3">
+                    <label className="form-label fw-medium small" htmlFor="login-password">
+                        Password
+                    </label>
+                    <div className="input-group">
+                        <span className="input-group-text bg-white border-end-0">
+                            <i className="bi bi-lock text-muted"></i>
+                        </span>
+                        <input
+                            id="login-password"
+                            type={showPassword ? "text" : "password"}
+                            name="password"
+                            className={`form-control border-start-0 border-end-0 ps-0 ${errors.password ? "is-invalid" : ""}`}
+                            placeholder="Enter your password"
+                            value={loginData.password}
+                            onChange={handleChange}
+                            autoComplete="current-password"
+                            disabled={isLoading}
+                        />
+                        <button
+                            type="button"
+                            className="input-group-text bg-white border-start-0"
+                            onClick={() => setShowPassword(v => !v)}
+                            tabIndex={-1}
+                            aria-label={showPassword ? "Hide password" : "Show password"}
+                            title={showPassword ? "Hide password" : "Show password"}
+                        >
+                            <i className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"} text-muted`}></i>
+                        </button>
+                    </div>
+                    {errors.password && <div className="invalid-feedback d-block small">{errors.password}</div>}
+                </div>
+
+                {/* Remember me + Forgot */}
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                    <div className="form-check mb-0">
+                        <input className="form-check-input" type="checkbox" id="rememberMe" />
+                        <label className="form-check-label small" htmlFor="rememberMe">Remember me</label>
+                    </div>
+                    <Link to="/forgot-password" className="text-decoration-none small" style={{ color: "var(--primary)" }}>
+                        Forgot password?
                     </Link>
                 </div>
 
-                <div className="d-grid">
-                    <Button
+                {/* Submit */}
+                <div className="d-grid mb-3">
+                    <button
                         type="submit"
-                        text="Login"
-                        className="btn btn-primary"
-                    />
+                        className="btn btn-primary py-2 fw-semibold"
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <>
+                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                Signing in…
+                            </>
+                        ) : (
+                            <>
+                                <i className="bi bi-box-arrow-in-right me-2"></i>
+                                Sign In
+                            </>
+                        )}
+                    </button>
                 </div>
 
-                <div className="text-center mt-4">
-                    <span>Don't have an account?</span>
-                    <Link
-                        to="/signup"
-                        className="ms-2 text-decoration-none fw-bold"
-                    >
+                <div className="text-center">
+                    <span className="small text-muted">Don't have an account?</span>
+                    <Link to="/signup" className="ms-1 text-decoration-none fw-semibold small" style={{ color: "var(--primary)" }}>
                         Sign Up
                     </Link>
                 </div>
