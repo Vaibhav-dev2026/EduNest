@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { getDB } from "../config/database.js";
 import { isValidObjectId, formatDateDDMMYYYY, resolveReference, nextSequentialId } from "../utils/helpers.js";
+import { emitEvent } from "../services/socketService.js";
 
 async function enrichBatch(db, batch, cache = {}) {
     const out = { ...batch };
@@ -135,6 +136,14 @@ export async function addBatch(req, res) {
     batch.updatedAt = new Date().toISOString();
 
     const result = await db.collection("batches").insertOne(batch);
+
+    emitEvent("batch:created", {
+        batchCode: generatedId,
+        batchName: batch.batchName,
+        courseId: batch.courseId,
+        teacherId: batch.teacherId,
+    });
+
     res.status(201).json({ success: true, message: "Batch Added Successfully", insertedId: result.insertedId, batchCode: generatedId });
 }
 
@@ -154,6 +163,13 @@ export async function updateBatch(req, res) {
 
     const result = await db.collection("batches").updateOne({ _id: new ObjectId(id) }, { $set: batch });
     if (result.matchedCount === 0) return res.status(404).json({ success: false, message: "Batch Not Found" });
+
+    emitEvent("batch:updated", {
+        id,
+        batchName: batch.batchName,
+        teacherId: batch.teacherId,
+    });
+
     res.status(200).json({ success: true, message: "Batch Updated Successfully" });
 }
 
@@ -163,5 +179,8 @@ export async function deleteBatch(req, res) {
     const db = getDB();
     const result = await db.collection("batches").deleteOne({ _id: new ObjectId(id) });
     if (result.deletedCount === 0) return res.status(404).json({ success: false, message: "Batch Not Found" });
+
+    emitEvent("batch:deleted", { id });
+
     res.status(200).json({ success: true, message: "Batch Deleted Successfully" });
 }

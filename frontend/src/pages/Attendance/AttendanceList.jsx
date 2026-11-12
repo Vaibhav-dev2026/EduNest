@@ -9,6 +9,7 @@ import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
 
 import { getAttendance, deleteAttendance } from "../../services/attendanceService";
+import { subscribeToEvents } from "../../services/socketService";
 
 function AttendanceList() {
     const [search, setSearch] = useState("");
@@ -19,19 +20,27 @@ function AttendanceList() {
 
     useEffect(() => {
         loadAttendance();
+
+        const unsubscribe = subscribeToEvents([
+            "attendance:created", "attendance:updated", "attendance:deleted"
+        ], () => {
+            loadAttendance(true);
+        });
+
+        return () => unsubscribe();
     }, []);
 
-    async function loadAttendance() {
-        setLoading(true);
+    async function loadAttendance(silent = false) {
+        if (!silent) setLoading(true);
         setError(null);
         try {
             const data = await getAttendance();
             setAttendance(data);
         } catch (err) {
             console.log(err);
-            setError("Failed to load attendance records.");
+            if (!silent) setError("Failed to load attendance records.");
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     }
 

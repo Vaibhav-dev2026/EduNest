@@ -6,6 +6,7 @@ import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
 import { getCurrentUser } from "../../services/authService";
 import { getFees } from "../../services/feeService";
+import { subscribeToEvents } from "../../services/socketService";
 
 function MyFees() {
     const user = getCurrentUser() || {};
@@ -36,6 +37,14 @@ function MyFees() {
 
     useEffect(() => {
         loadFees();
+
+        const unsubscribe = subscribeToEvents([
+            "fees:created", "fees:updated", "fees:deleted"
+        ], () => {
+            loadFees();
+        });
+
+        return () => unsubscribe();
     }, [loadFees]);
 
     return (

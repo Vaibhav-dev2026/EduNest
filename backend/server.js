@@ -1,4 +1,5 @@
 import express from "express";
+import http from "http";
 import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
@@ -7,6 +8,7 @@ import fs from "fs";
 
 import { connectDB } from "./config/database.js";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler.js";
+import { initSocket } from "./services/socketService.js";
 
 import authRoutes from "./routes/authRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
@@ -199,12 +201,18 @@ async function start() {
     try {
         await connectDB();
 
-        app.listen(PORT, "0.0.0.0", () => {
+        const server = http.createServer(app);
+        initSocket(server);
+
+        server.listen(PORT, "0.0.0.0", () => {
             console.log(
                 `🚀 EduNest Backend Running on 0.0.0.0:${PORT}`
             );
             console.log(
                 `📁 Uploads: http://0.0.0.0:${PORT}/uploads`
+            );
+            console.log(
+                `⚡ Real-Time Socket.IO initialized on 0.0.0.0:${PORT}`
             );
         });
     } catch (error) {

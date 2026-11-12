@@ -6,6 +6,7 @@ import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
 import { getCurrentUser } from "../../services/authService";
 import { getAttendance } from "../../services/attendanceService";
+import { subscribeToEvents } from "../../services/socketService";
 
 function MyAttendance() {
     const user = getCurrentUser() || {};
@@ -36,6 +37,14 @@ function MyAttendance() {
 
     useEffect(() => {
         loadAttendance();
+
+        const unsubscribe = subscribeToEvents([
+            "attendance:created", "attendance:updated", "attendance:deleted"
+        ], () => {
+            loadAttendance();
+        });
+
+        return () => unsubscribe();
     }, [loadAttendance]);
 
     const totalClasses = attendance.length;

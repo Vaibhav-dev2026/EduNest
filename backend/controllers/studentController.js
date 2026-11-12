@@ -8,6 +8,7 @@ import {
     nextSequentialId
 } from "../utils/helpers.js";
 import { createNotification } from "./notificationController.js";
+import { emitEvent } from "../services/socketService.js";
 
 async function enrichStudent(db, student, cache = {}) {
     const out = { ...student };
@@ -176,6 +177,14 @@ export async function addStudent(req, res) {
         relatedId: generatedId
     }).catch(err => console.error("Notification hook error:", err));
 
+    emitEvent("student:created", {
+        studentId: generatedId,
+        firstName: student.firstName,
+        lastName: student.lastName,
+        courseId: student.courseId,
+        batchId: student.batchId,
+    });
+
     res.status(201).json({
         success: true,
         message: "Student Added Successfully",
@@ -228,6 +237,13 @@ export async function updateStudent(req, res) {
         }
     }
 
+    emitEvent("student:updated", {
+        studentId: existing.studentId,
+        id,
+        courseId: student.courseId || existing.courseId,
+        batchId: student.batchId || existing.batchId
+    });
+
     res.status(200).json({ success: true, message: "Student Updated Successfully" });
 }
 
@@ -248,6 +264,11 @@ export async function deleteStudent(req, res) {
     if (existing && existing.studentId) {
         await db.collection("users").deleteOne({ referenceId: existing.studentId, role: "student" });
     }
+
+    emitEvent("student:deleted", {
+        studentId: existing?.studentId,
+        id
+    });
 
     res.status(200).json({ success: true, message: "Student Deleted Successfully" });
 }

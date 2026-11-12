@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { getDB } from "../config/database.js";
 import { isValidObjectId, formatDateDDMMYYYY, nextSequentialId } from "../utils/helpers.js";
 import { createNotification } from "./notificationController.js";
+import { emitEvent } from "../services/socketService.js";
 
 function getNoticeTimestamp(n) {
     if (!n) return 0;
@@ -94,6 +95,14 @@ export async function addNotice(req, res) {
         relatedId: generatedId
     }).catch(err => console.error("Notification hook error:", err));
 
+    emitEvent("notice:created", {
+        noticeId: generatedId,
+        title: notice.title,
+        audience: notice.audience,
+        priority: notice.priority,
+        postedBy: notice.postedBy,
+    });
+
     res.status(201).json({ success: true, message: "Notice Added Successfully", insertedId: result.insertedId, noticeId: generatedId });
 }
 
@@ -110,6 +119,13 @@ export async function updateNotice(req, res) {
 
     const result = await db.collection("notices").updateOne({ _id: new ObjectId(id) }, { $set: notice });
     if (result.matchedCount === 0) return res.status(404).json({ success: false, message: "Notice Not Found" });
+
+    emitEvent("notice:updated", {
+        id,
+        title: notice.title,
+        audience: notice.audience
+    });
+
     res.status(200).json({ success: true, message: "Notice Updated Successfully" });
 }
 
@@ -119,5 +135,8 @@ export async function deleteNotice(req, res) {
     const db = getDB();
     const result = await db.collection("notices").deleteOne({ _id: new ObjectId(id) });
     if (result.deletedCount === 0) return res.status(404).json({ success: false, message: "Notice Not Found" });
+
+    emitEvent("notice:deleted", { id });
+
     res.status(200).json({ success: true, message: "Notice Deleted Successfully" });
 }

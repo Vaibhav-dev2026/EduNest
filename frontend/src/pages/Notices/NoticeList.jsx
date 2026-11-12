@@ -9,6 +9,7 @@ import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
 
 import { getNotices, deleteNotice } from "../../services/noticeService";
+import { subscribeToEvents } from "../../services/socketService";
 
 function NoticeList() {
     const [search, setSearch] = useState("");
@@ -19,19 +20,27 @@ function NoticeList() {
 
     useEffect(() => {
         loadNotices();
+
+        const unsubscribe = subscribeToEvents([
+            "notice:created", "notice:updated", "notice:deleted"
+        ], () => {
+            loadNotices(true);
+        });
+
+        return () => unsubscribe();
     }, []);
 
-    async function loadNotices() {
-        setLoading(true);
+    async function loadNotices(silent = false) {
+        if (!silent) setLoading(true);
         setError(null);
         try {
             const data = await getNotices();
             setNotices(data);
         } catch (err) {
             console.log(err);
-            setError("Failed to load notices.");
+            if (!silent) setError("Failed to load notices.");
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     }
 

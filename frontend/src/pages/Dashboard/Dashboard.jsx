@@ -15,6 +15,7 @@ import { getFees } from "../../services/feeService";
 import { getAttendance } from "../../services/attendanceService";
 import { getNotices } from "../../services/noticeService";
 import { getMaterials } from "../../services/materialService";
+import { subscribeToEvents } from "../../services/socketService";
 
 function Dashboard() {
     const [loading, setLoading] = useState(true);
@@ -33,12 +34,30 @@ function Dashboard() {
     useEffect(() => {
         fetchDashboardData();
 
-        // 15-second polling for automatic live updates
+        // Real-time synchronization
+        const unsubscribe = subscribeToEvents([
+            "student:created", "student:updated", "student:deleted",
+            "teacher:created", "teacher:updated", "teacher:deleted",
+            "course:created", "course:updated", "course:deleted",
+            "batch:created", "batch:updated", "batch:deleted",
+            "attendance:created", "attendance:updated", "attendance:deleted",
+            "fees:created", "fees:updated", "fees:deleted",
+            "notice:created", "notice:updated", "notice:deleted",
+            "material:created", "material:deleted",
+            "profile:updated"
+        ], () => {
+            fetchDashboardData(true);
+        });
+
+        // 15-second polling as fallback
         const intervalId = setInterval(() => {
             fetchDashboardData(true);
         }, 15000);
 
-        return () => clearInterval(intervalId);
+        return () => {
+            unsubscribe();
+            clearInterval(intervalId);
+        };
     }, []);
 
     async function fetchDashboardData(isBackground = false) {

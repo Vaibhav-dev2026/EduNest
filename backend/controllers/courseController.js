@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { getDB } from "../config/database.js";
 import { isValidObjectId, nextSequentialId } from "../utils/helpers.js";
+import { emitEvent } from "../services/socketService.js";
 
 function enrichCourse(c) {
     const out = { ...c };
@@ -81,6 +82,12 @@ export async function addCourse(req, res) {
     course.updatedAt = new Date().toISOString();
 
     const result = await db.collection("courses").insertOne(course);
+
+    emitEvent("course:created", {
+        courseCode: generatedId,
+        courseName: course.courseName,
+    });
+
     res.status(201).json({ success: true, message: "Course Added Successfully", insertedId: result.insertedId, courseCode: generatedId });
 }
 
@@ -108,6 +115,12 @@ export async function updateCourse(req, res) {
 
     const result = await db.collection("courses").updateOne({ _id: new ObjectId(id) }, { $set: course });
     if (result.matchedCount === 0) return res.status(404).json({ success: false, message: "Course Not Found" });
+
+    emitEvent("course:updated", {
+        id,
+        courseName: course.courseName
+    });
+
     res.status(200).json({ success: true, message: "Course Updated Successfully" });
 }
 
@@ -117,5 +130,8 @@ export async function deleteCourse(req, res) {
     const db = getDB();
     const result = await db.collection("courses").deleteOne({ _id: new ObjectId(id) });
     if (result.deletedCount === 0) return res.status(404).json({ success: false, message: "Course Not Found" });
+
+    emitEvent("course:deleted", { id });
+
     res.status(200).json({ success: true, message: "Course Deleted Successfully" });
 }

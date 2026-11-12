@@ -3,6 +3,7 @@ import { getDB } from "../config/database.js";
 import { hashPassword } from "../utils/password.js";
 import { isValidObjectId, formatDateDDMMYYYY, nextSequentialId } from "../utils/helpers.js";
 import { createNotification } from "./notificationController.js";
+import { emitEvent } from "../services/socketService.js";
 
 function enrichTeacher(t) {
     const out = { ...t };
@@ -215,6 +216,13 @@ export async function addTeacher(req, res) {
         }
     }
 
+    emitEvent("teacher:created", {
+        teacherId: generatedId,
+        firstName: teacher.firstName,
+        lastName: teacher.lastName,
+        subject: teacher.subject || teacher.specialization,
+    });
+
     res.status(201).json({
         success: true,
         message: "Teacher Added Successfully",
@@ -296,6 +304,11 @@ export async function updateTeacher(req, res) {
         }
     }
 
+    emitEvent("teacher:updated", {
+        teacherId: existing.teacherId,
+        id
+    });
+
     res.status(200).json({ success: true, message: "Teacher Updated Successfully" });
 }
 
@@ -316,6 +329,11 @@ export async function deleteTeacher(req, res) {
     if (existing && existing.teacherId) {
         await db.collection("users").deleteOne({ referenceId: existing.teacherId, role: "teacher" });
     }
+
+    emitEvent("teacher:deleted", {
+        teacherId: existing?.teacherId,
+        id
+    });
 
     res.status(200).json({ success: true, message: "Teacher Deleted Successfully" });
 }

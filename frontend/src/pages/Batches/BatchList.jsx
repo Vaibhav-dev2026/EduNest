@@ -9,6 +9,7 @@ import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
 
 import { getBatches, deleteBatch } from "../../services/batchService";
+import { subscribeToEvents } from "../../services/socketService";
 
 function BatchList() {
     const [search, setSearch] = useState("");
@@ -19,19 +20,27 @@ function BatchList() {
 
     useEffect(() => {
         loadBatches();
+
+        const unsubscribe = subscribeToEvents([
+            "batch:created", "batch:updated", "batch:deleted"
+        ], () => {
+            loadBatches(true);
+        });
+
+        return () => unsubscribe();
     }, []);
 
-    async function loadBatches() {
-        setLoading(true);
+    async function loadBatches(silent = false) {
+        if (!silent) setLoading(true);
         setError(null);
         try {
             const data = await getBatches();
             setBatches(data);
         } catch (err) {
             console.log(err);
-            setError("Failed to load batches.");
+            if (!silent) setError("Failed to load batches.");
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     }
 

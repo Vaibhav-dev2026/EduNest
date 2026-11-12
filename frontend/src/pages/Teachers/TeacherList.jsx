@@ -9,6 +9,7 @@ import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
 
 import { getTeachers, deleteTeacher } from "../../services/teacherService";
+import { subscribeToEvents } from "../../services/socketService";
 
 function TeacherList() {
     const [search, setSearch] = useState("");
@@ -19,19 +20,27 @@ function TeacherList() {
 
     useEffect(() => {
         loadTeachers();
+
+        const unsubscribe = subscribeToEvents([
+            "teacher:created", "teacher:updated", "teacher:deleted"
+        ], () => {
+            loadTeachers(true);
+        });
+
+        return () => unsubscribe();
     }, []);
 
-    async function loadTeachers() {
-        setLoading(true);
+    async function loadTeachers(silent = false) {
+        if (!silent) setLoading(true);
         setError(null);
         try {
             const data = await getTeachers();
             setTeachers(data);
         } catch (err) {
             console.log(err);
-            setError("Failed to load teachers list.");
+            if (!silent) setError("Failed to load teachers list.");
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     }
 

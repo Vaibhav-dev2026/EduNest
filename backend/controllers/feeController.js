@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { getDB } from "../config/database.js";
 import { isValidObjectId, formatDateDDMMYYYY, resolveReference, nextSequentialId } from "../utils/helpers.js";
 import { createNotification } from "./notificationController.js";
+import { emitEvent } from "../services/socketService.js";
 
 function computeAmounts(fee) {
     const total = Math.max(0, Number(fee.totalFee) || 0);
@@ -152,6 +153,15 @@ export async function addFee(req, res) {
             }).catch(err => console.error("Fee notification hook error:", err));
         }
 
+        emitEvent("fees:created", {
+            feeId,
+            receiptNo,
+            studentId: fee.studentId,
+            paidFee: fee.paidFee,
+            dueFee: fee.dueFee,
+            status: fee.status,
+        });
+
         res.status(201).json({
             success: true,
             message: "Fee Record Added Successfully",
@@ -222,6 +232,17 @@ export async function updateFee(req, res) {
     try {
         const result = await db.collection("fees").updateOne({ _id: new ObjectId(id) }, { $set: fee });
         if (result.matchedCount === 0) return res.status(404).json({ success: false, message: "Fee Record Not Found" });
+
+        const updatedFee = await db.collection("fees").findOne({ _id: new ObjectId(id) });
+        emitEvent("fees:updated", {
+            id,
+            feeId: updatedFee?.feeId,
+            studentId: updatedFee?.studentId,
+            paidFee: updatedFee?.paidFee,
+            dueFee: updatedFee?.dueFee,
+            status: updatedFee?.status
+        });
+
         res.status(200).json({ success: true, message: "Fee Record Updated Successfully" });
     } catch (err) {
         if (err.code === 11000) {
@@ -242,7 +263,14 @@ export async function deleteFee(req, res) {
     const { id } = req.params;
     if (!isValidObjectId(id)) return res.status(400).json({ success: false, message: "Invalid Fee Id" });
     const db = getDB();
+    const existing = await db.collection("fees").findOne({ _id: new ObjectId(id) });
     const result = await db.collection("fees").deleteOne({ _id: new ObjectId(id) });
     if (result.deletedCount === 0) return res.status(404).json({ success: false, message: "Fee Record Not Found" });
+
+    emitEvent("fees:deleted", {
+        id,
+        studentId: existing?.studentId
+    });
+
     res.status(200).json({ success: true, message: "Fee Record Deleted Successfully" });
 }

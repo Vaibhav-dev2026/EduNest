@@ -9,6 +9,7 @@ import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
 
 import { getStudents, deleteStudent } from "../../services/studentService";
+import { subscribeToEvents } from "../../services/socketService";
 
 function StudentList() {
     const [search, setSearch] = useState("");
@@ -19,19 +20,27 @@ function StudentList() {
 
     useEffect(() => {
         loadStudents();
+
+        const unsubscribe = subscribeToEvents([
+            "student:created", "student:updated", "student:deleted"
+        ], () => {
+            loadStudents(true);
+        });
+
+        return () => unsubscribe();
     }, []);
 
-    async function loadStudents() {
-        setLoading(true);
+    async function loadStudents(silent = false) {
+        if (!silent) setLoading(true);
         setError(null);
         try {
             const data = await getStudents();
             setStudents(data);
         } catch (err) {
             console.log(err);
-            setError("Failed to load students list.");
+            if (!silent) setError("Failed to load students list.");
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     }
 

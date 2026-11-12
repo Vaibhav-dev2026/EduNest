@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { getDB } from "../config/database.js";
 import { isValidObjectId, nextSequentialId } from "../utils/helpers.js";
+import { emitEvent } from "../services/socketService.js";
 
 export async function getAttendance(req, res) {
     const db = getDB();
@@ -89,6 +90,16 @@ export async function addAttendance(req, res) {
     };
 
     const result = await db.collection("attendance").insertOne(newRecord);
+
+    emitEvent("attendance:created", {
+        attendanceId,
+        studentId: newRecord.studentId,
+        studentName: newRecord.studentName,
+        batchId: newRecord.batchId,
+        status: newRecord.status,
+        attendanceDate: newRecord.attendanceDate,
+    });
+
     res.status(201).json({
         success: true,
         message: "Attendance Marked Successfully",
@@ -124,6 +135,14 @@ export async function updateAttendance(req, res) {
     record.updatedAt = new Date().toISOString();
     const result = await db.collection("attendance").updateOne({ _id: new ObjectId(id) }, { $set: record });
     if (result.matchedCount === 0) return res.status(404).json({ success: false, message: "Record Not Found" });
+
+    emitEvent("attendance:updated", {
+        id,
+        studentId: record.studentId,
+        attendanceDate: record.attendanceDate,
+        status: record.status
+    });
+
     res.status(200).json({ success: true, message: "Attendance Updated Successfully" });
 }
 
@@ -131,7 +150,14 @@ export async function deleteAttendance(req, res) {
     const { id } = req.params;
     if (!isValidObjectId(id)) return res.status(400).json({ success: false, message: "Invalid Attendance Id" });
     const db = getDB();
+    const existing = await db.collection("attendance").findOne({ _id: new ObjectId(id) });
     const result = await db.collection("attendance").deleteOne({ _id: new ObjectId(id) });
     if (result.deletedCount === 0) return res.status(404).json({ success: false, message: "Record Not Found" });
+
+    emitEvent("attendance:deleted", {
+        id,
+        studentId: existing?.studentId
+    });
+
     res.status(200).json({ success: true, message: "Attendance Record Deleted" });
 }

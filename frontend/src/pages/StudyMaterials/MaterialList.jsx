@@ -9,6 +9,7 @@ import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
 
 import { getMaterials, deleteMaterial, getFileUrl } from "../../services/materialService";
+import { subscribeToEvents } from "../../services/socketService";
 
 function MaterialList() {
     const [search, setSearch] = useState("");
@@ -19,23 +20,31 @@ function MaterialList() {
 
     useEffect(() => {
         loadData();
+
+        const unsubscribe = subscribeToEvents([
+            "material:created", "material:deleted"
+        ], () => {
+            loadData(true);
+        });
+
+        return () => unsubscribe();
     }, []);
 
     // The backend now returns fully-resolved, readable fields for every
     // material (uploadedBy, courseName, batchName, uploadDateFormatted),
     // so the frontend no longer needs to fetch teachers/courses/batches
     // separately or build its own ID → name lookup maps.
-    async function loadData() {
-        setLoading(true);
+    async function loadData(silent = false) {
+        if (!silent) setLoading(true);
         setError(null);
         try {
             const materialsData = await getMaterials();
             setMaterials(materialsData || []);
         } catch (err) {
             console.log(err);
-            setError("Failed to load materials.");
+            if (!silent) setError("Failed to load materials.");
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     }
 

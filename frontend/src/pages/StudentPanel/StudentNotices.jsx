@@ -5,6 +5,7 @@ import Table from "../../components/common/Table";
 import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
 import { getNotices } from "../../services/noticeService";
+import { subscribeToEvents } from "../../services/socketService";
 
 // A notice is visible to students if:
 // audience is "All", "All Students", "Students", a batch name, or is empty/not set
@@ -38,6 +39,14 @@ function StudentNotices() {
 
     useEffect(() => {
         loadNotices();
+
+        const unsubscribe = subscribeToEvents([
+            "notice:created", "notice:updated", "notice:deleted"
+        ], () => {
+            loadNotices();
+        });
+
+        return () => unsubscribe();
     }, [loadNotices]);
 
     const getPriorityBadge = (priority) => {

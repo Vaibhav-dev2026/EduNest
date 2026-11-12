@@ -12,6 +12,7 @@ import { getFees, deleteFee } from "../../services/feeService";
 import { getStudents } from "../../services/studentService";
 import { getCourses } from "../../services/courseService";
 import { getBatches } from "../../services/batchService";
+import { subscribeToEvents } from "../../services/socketService";
 
 function FeeList() {
     const [search, setSearch] = useState("");
@@ -25,10 +26,18 @@ function FeeList() {
 
     useEffect(() => {
         loadData();
+
+        const unsubscribe = subscribeToEvents([
+            "fees:created", "fees:updated", "fees:deleted"
+        ], () => {
+            loadData(true);
+        });
+
+        return () => unsubscribe();
     }, []);
 
-    async function loadData() {
-        setLoading(true);
+    async function loadData(silent = false) {
+        if (!silent) setLoading(true);
         setError(null);
         try {
             const [feesData, sData, cData, bData] = await Promise.all([

@@ -9,6 +9,7 @@ import { getCurrentUser } from "../../services/authService";
 import { getMaterials, addMaterial, deleteMaterial, downloadMaterialFile, getFileUrl } from "../../services/materialService";
 import { getCourses } from "../../services/courseService";
 import { getBatches } from "../../services/batchService";
+import { subscribeToEvents } from "../../services/socketService";
 
 const EMPTY_FORM = {
     title: "",
@@ -60,6 +61,14 @@ function TeacherMaterials() {
 
     useEffect(() => {
         loadMaterials();
+
+        const unsubscribe = subscribeToEvents([
+            "material:created", "material:deleted"
+        ], () => {
+            loadMaterials();
+        });
+
+        return () => unsubscribe();
     }, [loadMaterials]);
 
     function handleChange(e) {

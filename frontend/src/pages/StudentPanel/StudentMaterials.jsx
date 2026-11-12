@@ -5,6 +5,7 @@ import Table from "../../components/common/Table";
 import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
 import { getMaterials, downloadMaterialFile } from "../../services/materialService";
+import { subscribeToEvents } from "../../services/socketService";
 
 function StudentMaterials() {
     const [materials, setMaterials] = useState([]);
@@ -26,6 +27,14 @@ function StudentMaterials() {
 
     useEffect(() => {
         loadMaterials();
+
+        const unsubscribe = subscribeToEvents([
+            "material:created", "material:deleted"
+        ], () => {
+            loadMaterials();
+        });
+
+        return () => unsubscribe();
     }, [loadMaterials]);
 
     const resolveTeacherName = (item) => {

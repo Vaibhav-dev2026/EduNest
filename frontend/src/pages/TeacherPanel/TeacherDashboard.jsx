@@ -11,6 +11,7 @@ import { getMaterials } from "../../services/materialService";
 import { getNotices } from "../../services/noticeService";
 import { getTeachers } from "../../services/teacherService";
 import { getFileUrl } from "../../services/api";
+import { subscribeToEvents } from "../../services/socketService";
 
 function TeacherDashboard() {
     const user = getCurrentUser() || {};
@@ -95,6 +96,17 @@ function TeacherDashboard() {
     useEffect(() => {
         loadDashboardData();
 
+        // Real-time synchronization
+        const unsubscribe = subscribeToEvents([
+            "student:created", "student:updated", "student:deleted",
+            "attendance:created", "attendance:updated", "attendance:deleted",
+            "notice:created", "notice:updated", "notice:deleted",
+            "material:created", "material:deleted",
+            "teacher:updated", "profile:updated"
+        ], () => {
+            loadDashboardData();
+        });
+
         // Refresh data when user returns to dashboard tab/window
         const handleRefresh = () => {
             if (document.visibilityState === "visible") {
@@ -106,6 +118,7 @@ function TeacherDashboard() {
         document.addEventListener("visibilitychange", handleRefresh);
 
         return () => {
+            unsubscribe();
             window.removeEventListener("focus", handleRefresh);
             document.removeEventListener("visibilitychange", handleRefresh);
         };

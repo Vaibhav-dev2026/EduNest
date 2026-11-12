@@ -8,6 +8,7 @@ import SearchBox from "../../components/common/SearchBox";
 import { getCurrentUser } from "../../services/authService";
 import { getNotices, addNotice, updateNotice, deleteNotice } from "../../services/noticeService";
 import { getBatches } from "../../services/batchService";
+import { subscribeToEvents } from "../../services/socketService";
 
 // A notice is visible to teachers if audience is "All", "All Teachers", "Teachers",
 // created by this teacher, batch-specific, or is a legacy notice.
@@ -60,6 +61,14 @@ function TeacherNotices() {
 
     useEffect(() => {
         loadNotices();
+
+        const unsubscribe = subscribeToEvents([
+            "notice:created", "notice:updated", "notice:deleted"
+        ], () => {
+            loadNotices();
+        });
+
+        return () => unsubscribe();
     }, [loadNotices]);
 
     function handleChange(e) {

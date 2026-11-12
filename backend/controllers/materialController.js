@@ -4,6 +4,7 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import { getDB } from "../config/database.js";
 import { isValidObjectId, formatDateDDMMYYYY, resolveReference, nextSequentialId } from "../utils/helpers.js";
+import { emitEvent } from "../services/socketService.js";
 
 // ─── Resolve __dirname in ESM ─────────────────────────────────────────────────
 const __filename = fileURLToPath(import.meta.url);
@@ -303,6 +304,16 @@ export async function addMaterial(req, res) {
     };
 
     const result = await db.collection("materials").insertOne(doc);
+
+    emitEvent("material:created", {
+        materialId: generatedId,
+        title,
+        subject,
+        courseId: resolvedCourseId || "",
+        batchId: resolvedBatchId || "",
+        uploadedBy,
+    });
+
     res.status(201).json({
         success: true,
         message: "Material Uploaded Successfully",
@@ -382,6 +393,8 @@ export async function deleteMaterial(req, res) {
     if (material.fileUrl && material.fileUrl.startsWith("/uploads/materials/")) {
         safeDeleteFile(material.fileUrl);
     }
+
+    emitEvent("material:deleted", { id });
 
     res.status(200).json({ success: true, message: "Material Deleted Successfully" });
 }

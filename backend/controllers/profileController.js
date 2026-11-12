@@ -4,6 +4,7 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import { getDB } from "../config/database.js";
 import { resolveReference, formatDateDDMMYYYY } from "../utils/helpers.js";
+import { emitEvent } from "../services/socketService.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -307,6 +308,13 @@ export async function updateProfile(req, res) {
         profilePhoto: finalPhoto,
         photo: finalPhoto
     };
+
+    emitEvent("profile:updated", {
+        userId: updatedUser._id.toString(),
+        referenceId: updatedUser.referenceId,
+        role: updatedUser.role,
+        photo: finalPhoto
+    });
 
     res.status(200).json({
         success: true,
