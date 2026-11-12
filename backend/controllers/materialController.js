@@ -312,6 +312,60 @@ export async function addMaterial(req, res) {
     });
 }
 
+// ─── GET /materials/:id/download ─────────────────────────────────────────────
+export async function downloadMaterial(req, res) {
+    const { id } = req.params;
+    if (!isValidObjectId(id)) return res.status(400).json({ success: false, message: "Invalid Material Id" });
+
+    const db = getDB();
+    const material = await db.collection("materials").findOne({ _id: new ObjectId(id) });
+    if (!material) return res.status(404).json({ success: false, message: "Material Not Found" });
+
+    const fileUrl = material.fileUrl || "";
+    if (!fileUrl || !fileUrl.startsWith("/uploads/materials/")) {
+        return res.status(404).json({ success: false, message: "File not available for download." });
+    }
+
+    const filename = path.basename(fileUrl);
+    // Sanitize filename to prevent path traversal
+    if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
+        return res.status(400).json({ success: false, message: "Invalid file path." });
+    }
+
+    const filePath = path.join(UPLOADS_DIR, filename);
+    if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ success: false, message: "File not found on server." });
+    }
+
+    const originalName = material.fileName || filename;
+    const ext = path.extname(filename).toLowerCase();
+
+    const mimeMap = {
+        ".pdf": "application/pdf",
+        ".doc": "application/msword",
+        ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ".ppt": "application/vnd.ms-powerpoint",
+        ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        ".zip": "application/zip",
+    };
+    const mimeType = mimeMap[ext] || "application/octet-stream";
+
+    // Safe filename for Content-Disposition (strip non-ASCII)
+    const safeOriginalName = originalName.replace(/[^\x20-\x7E]/g, "_").replace(/"/g, "'");
+
+    res.setHeader("Content-Type", mimeType);
+    res.setHeader("Content-Disposition", `attachment; filename="${safeOriginalName}"`);
+    res.setHeader("Cache-Control", "no-cache");
+
+    const stream = fs.createReadStream(filePath);
+    stream.on("error", () => {
+        if (!res.headersSent) {
+            res.status(500).json({ success: false, message: "Error streaming file." });
+        }
+    });
+    stream.pipe(res);
+}
+
 // ─── DELETE /materials/:id ────────────────────────────────────────────────────
 export async function deleteMaterial(req, res) {
     const { id } = req.params;

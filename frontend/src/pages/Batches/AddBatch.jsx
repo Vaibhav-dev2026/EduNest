@@ -100,6 +100,24 @@ function AddBatch() {
             setIsSaving(false);
         }
     };
+
+    const handleReset = () => {
+        setBatch({
+            batchName: "",
+            course: "",
+            teacher: "",
+            startDate: "",
+            endDate: "",
+            timing: "",
+            room: "",
+            maxStudents: "",
+            status: "Active",
+            description: ""
+        });
+        setErrors({});
+        setApiError(null);
+        setApiSuccess(null);
+    };
         return (
 
         <AdminLayout>
@@ -343,10 +361,11 @@ function AddBatch() {
                             />
 
                             <Button
-                                type="reset"
+                                type="button"
                                 text="Reset"
                                 className="btn btn-warning"
                                 disabled={isSaving}
+                                onClick={handleReset}
                             />
 
                             <Button

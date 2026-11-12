@@ -77,8 +77,14 @@ function StudentDashboard() {
             const sortedMaterials = [...activeMaterials].sort((a, b) => getTimestamp(b, "uploadDate") - getTimestamp(a, "uploadDate"));
             const latestMaterial = sortedMaterials.length > 0 ? sortedMaterials[0] : null;
 
-            // Latest active notice (sorted newest first)
-            const activeNotices = (noticesData || []).filter(n => n.status !== 'Inactive');
+            // Latest active notice for students (sorted newest first)
+            const activeNotices = (noticesData || []).filter(n => {
+                if (n.status === 'Inactive') return false;
+                const audience = (n.audience || "").trim().toLowerCase();
+                // Hide teacher-only notices
+                if (audience === "all teachers" || audience === "teachers") return false;
+                return true;
+            });
             const sortedNotices = [...activeNotices].sort((a, b) => (b.timestamp || getTimestamp(b, "date")) - (a.timestamp || getTimestamp(a, "date")));
             const latestNotice = sortedNotices.length > 0 ? sortedNotices[0] : null;
 

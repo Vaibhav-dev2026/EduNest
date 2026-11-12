@@ -52,8 +52,18 @@ function TeacherList() {
         }
     }
 
+    const getTeacherName = (t) => {
+        if (!t) return "Not Available";
+        const fn = (t.firstName && t.firstName !== "Not Available") ? t.firstName.trim() : "";
+        const ln = (t.lastName && t.lastName !== "Not Available") ? t.lastName.trim() : "";
+        if (fn || ln) return `${fn} ${ln}`.trim();
+        if (t.fullName && t.fullName !== "Not Available") return t.fullName.trim();
+        if (t.name && t.name !== "Not Available") return t.name.trim();
+        return "Not Available";
+    };
+
     const filteredTeachers = teachers.filter((teacher) => {
-        const fullName = teacher.fullName || teacher.name || `${teacher.firstName || ''} ${teacher.lastName || ''}`.trim();
+        const fullName = getTeacherName(teacher);
         return (fullName && fullName.toLowerCase().includes(search.toLowerCase())) ||
                (teacher.teacherId && teacher.teacherId.toLowerCase().includes(search.toLowerCase()));
     });
@@ -130,7 +140,7 @@ function TeacherList() {
                                             </span>
                                         </td>
                                         <td className="fw-semibold text-dark">
-                                            {teacher.fullName || teacher.name || `${teacher.firstName || ''} ${teacher.lastName || ''}`.trim() || 'N/A'}
+                                            {getTeacherName(teacher)}
                                         </td>
                                         <td>
                                             <span className="badge badge-soft-info">

@@ -4,12 +4,13 @@ import PageHeader from "../../components/common/PageHeader";
 import Table from "../../components/common/Table";
 import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
-import { getMaterials, getFileUrl } from "../../services/materialService";
+import { getMaterials, downloadMaterialFile } from "../../services/materialService";
 
 function StudentMaterials() {
     const [materials, setMaterials] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [downloading, setDownloading] = useState(null);
 
     const loadMaterials = React.useCallback(async () => {
         try {
@@ -44,7 +45,16 @@ function StudentMaterials() {
         if (!dateStr) return "Not Available";
         const dateObj = new Date(dateStr);
         if (isNaN(dateObj.getTime())) return dateStr;
-        return dateObj.toLocaleDateString("en-GB"); // DD/MM/YYYY
+        return dateObj.toLocaleDateString("en-GB");
+    };
+
+    const handleDownload = async (item) => {
+        setDownloading(item._id);
+        try {
+            await downloadMaterialFile(item._id, item.fileName || item.title || "download");
+        } finally {
+            setDownloading(null);
+        }
     };
 
     return (
@@ -80,6 +90,7 @@ function StudentMaterials() {
                                         const courseName = resolveCourseName(item);
                                         const batchName = resolveBatchName(item);
                                         const matType = item.materialType || item.type || "Not Available";
+                                        const hasFile = Boolean(item.fileUrl && !item.fileUrl.startsWith("C:\\"));
                                         return (
                                             <tr key={item._id || idx}>
                                                 <td className="fw-medium text-dark">{item.title || "Not Available"}</td>
@@ -95,16 +106,18 @@ function StudentMaterials() {
                                                     {item.description || "Not Available"}
                                                 </td>
                                                 <td>
-                                                    {item.fileUrl && !item.fileUrl.startsWith("C:\\") ? (
-                                                        <a
-                                                            href={getFileUrl(item.fileUrl)}
-                                                            target="_blank"
-                                                            rel="noreferrer"
-                                                            download={item.fileName || true}
+                                                    {hasFile ? (
+                                                        <button
                                                             className="btn btn-sm btn-primary"
+                                                            onClick={() => handleDownload(item)}
+                                                            disabled={downloading === item._id}
                                                         >
-                                                            <i className="bi bi-download me-1"></i> Download
-                                                        </a>
+                                                            {downloading === item._id ? (
+                                                                <><i className="bi bi-hourglass-split me-1"></i>Downloading...</>
+                                                            ) : (
+                                                                <><i className="bi bi-download me-1"></i>Download</>
+                                                            )}
+                                                        </button>
                                                     ) : (
                                                         <span className="badge bg-light text-muted">File Not Available</span>
                                                     )}

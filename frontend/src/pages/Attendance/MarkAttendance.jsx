@@ -273,11 +273,16 @@ function MarkAttendance() {
                                 disabled={isSaving}
                             />
                             <Button
-                                type="reset"
+                                type="button"
                                 text="Reset"
                                 className="btn btn-warning"
                                 disabled={isSaving}
-                                onClick={() => setAttendance({ attendanceDate: "", batchId: "", batchName: "", studentId: "", studentName: "", status: "Present", remarks: "" })}
+                                onClick={() => {
+                                    setAttendance({ attendanceDate: "", batchId: "", batchName: "", studentId: "", studentName: "", status: "Present", remarks: "" });
+                                    setErrors({});
+                                    setApiError(null);
+                                    setApiSuccess(null);
+                                }}
                             />
                             <Button
                                 type="button"

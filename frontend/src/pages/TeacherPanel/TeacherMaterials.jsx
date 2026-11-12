@@ -6,7 +6,7 @@ import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
 import SearchBox from "../../components/common/SearchBox";
 import { getCurrentUser } from "../../services/authService";
-import { getMaterials, addMaterial, deleteMaterial, getFileUrl } from "../../services/materialService";
+import { getMaterials, addMaterial, deleteMaterial, downloadMaterialFile, getFileUrl } from "../../services/materialService";
 import { getCourses } from "../../services/courseService";
 import { getBatches } from "../../services/batchService";
 
@@ -37,6 +37,7 @@ function TeacherMaterials() {
     const [saving, setSaving] = useState(false);
     const [formError, setFormError] = useState(null);
     const [formSuccess, setFormSuccess] = useState(null);
+    const [downloading, setDownloading] = useState(null);
 
     const loadMaterials = React.useCallback(async () => {
         setLoading(true);
@@ -135,6 +136,15 @@ function TeacherMaterials() {
             await loadMaterials();
         } catch (err) {
             setError("Failed to delete material.");
+        }
+    }
+
+    async function handleDownload(item) {
+        setDownloading(item._id);
+        try {
+            await downloadMaterialFile(item._id, item.fileName || item.title || "download");
+        } finally {
+            setDownloading(null);
         }
     }
 
@@ -288,9 +298,17 @@ function TeacherMaterials() {
                                             <td>{formatDate(item.uploadDate || item.date, item.uploadDateFormatted)}</td>
                                             <td>
                                                 {hasValidFile ? (
-                                                    <a href={fileUrl} target="_blank" rel="noreferrer" download={item.fileName || true} className="btn btn-sm btn-outline-primary">
-                                                        <i className="bi bi-download me-1"></i>Download
-                                                    </a>
+                                                    <button
+                                                        className="btn btn-sm btn-outline-primary"
+                                                        onClick={() => handleDownload(item)}
+                                                        disabled={downloading === item._id}
+                                                    >
+                                                        {downloading === item._id ? (
+                                                            <><i className="bi bi-hourglass-split me-1"></i>Downloading...</>
+                                                        ) : (
+                                                            <><i className="bi bi-download me-1"></i>Download</>
+                                                        )}
+                                                    </button>
                                                 ) : (
                                                     <span className="badge bg-light text-muted">File Not Available</span>
                                                 )}

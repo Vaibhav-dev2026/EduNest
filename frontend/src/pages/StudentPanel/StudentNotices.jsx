@@ -6,6 +6,18 @@ import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
 import { getNotices } from "../../services/noticeService";
 
+// A notice is visible to students if:
+// audience is "All", "All Students", "Students", a batch name, or is empty/not set
+// (never show "All Teachers" or "Teachers" only notices)
+function isNoticeForStudent(notice) {
+    const audience = (notice.audience || "").trim().toLowerCase();
+    if (!audience || audience === "all" || audience === "all (students & teachers)") return true;
+    if (audience === "all students" || audience === "students") return true;
+    if (audience === "all teachers" || audience === "teachers") return false;
+    // Batch-specific notices are visible to students in that batch (show all batch notices to students)
+    return true;
+}
+
 function StudentNotices() {
     const [notices, setNotices] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -15,7 +27,8 @@ function StudentNotices() {
         try {
             setLoading(true);
             const data = await getNotices();
-            setNotices(data);
+            const filtered = (data || []).filter(isNoticeForStudent);
+            setNotices(filtered);
         } catch (err) {
             setError("Failed to load notices.");
         } finally {
@@ -53,6 +66,7 @@ function StudentNotices() {
                                         <th>Title</th>
                                         <th>Description</th>
                                         <th>Priority</th>
+                                        <th>Posted By</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -62,6 +76,7 @@ function StudentNotices() {
                                             <td className="fw-medium text-primary">{notice.title}</td>
                                             <td>{notice.description || "—"}</td>
                                             <td>{getPriorityBadge(notice.priority)}</td>
+                                            <td>{notice.postedBy || notice.createdBy || "Admin"}</td>
                                         </tr>
                                     ))}
                                 </tbody>

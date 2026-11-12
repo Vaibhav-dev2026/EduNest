@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import AdminLayout from "../../layouts/AdminLayout";
@@ -7,10 +7,17 @@ import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
 
 import { addNotice } from "../../services/noticeService";
+import { getBatches } from "../../services/batchService";
 
 function AddNotice() {
 
     const navigate = useNavigate();
+
+    const [batches, setBatches] = useState([]);
+
+    useEffect(() => {
+        getBatches().then(data => setBatches(data || [])).catch(() => {});
+    }, []);
 
     const [notice, setNotice] = useState({
 
@@ -34,6 +41,21 @@ function AddNotice() {
     const [isSaving, setIsSaving] = useState(false);
     const [apiError, setApiError] = useState(null);
     const [apiSuccess, setApiSuccess] = useState(null);
+
+    const handleReset = () => {
+        setNotice({
+            title: "",
+            audience: "",
+            publishDate: "",
+            expiryDate: "",
+            priority: "Medium",
+            attachment: null,
+            description: ""
+        });
+        setErrors({});
+        setApiError(null);
+        setApiSuccess(null);
+    };
 
     const handleChange = (event) => {
 
@@ -158,21 +180,20 @@ function AddNotice() {
                                     value={notice.audience}
                                     onChange={handleChange}
                                 >
-
                                     <option value="">
                                         Select Audience
                                     </option>
-
-                                    <option>All Students</option>
-
-                                    <option>All Teachers</option>
-
-                                    <option>React Batch</option>
-
-                                    <option>MERN Batch</option>
-
-                                    <option>PHP Batch</option>
-
+                                    <option value="All">All (Students &amp; Teachers)</option>
+                                    <option value="All Students">All Students</option>
+                                    <option value="All Teachers">All Teachers</option>
+                                    {batches.map(b => (
+                                        <option key={b._id} value={b.batchName || b.batchCode}>
+                                            {b.batchName || b.batchCode}
+                                        </option>
+                                    ))}
+                                    <option value="React Batch">React Batch</option>
+                                    <option value="MERN Batch">MERN Batch</option>
+                                    <option value="PHP Batch">PHP Batch</option>
                                 </select>
 
                                 {
@@ -305,12 +326,10 @@ function AddNotice() {
                             </div>
 
                         </div>
-                                                <div className="d-flex gap-2 mt-4">
-
+                        <div className="d-flex gap-2 mt-4">
                             <Button type="submit" text={isSaving ? "Saving..." : "Save Notice"} className="btn btn-primary" disabled={isSaving} />
-                            <Button type="reset" text="Reset" className="btn btn-warning" disabled={isSaving} />
+                            <Button type="button" text="Reset" className="btn btn-warning" onClick={handleReset} disabled={isSaving} />
                             <Button type="button" text="Cancel" className="btn btn-secondary" onClick={() => navigate("/notices")} disabled={isSaving} />
-
                         </div>
 
                     </form>

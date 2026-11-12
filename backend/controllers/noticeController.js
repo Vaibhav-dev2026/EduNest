@@ -30,6 +30,7 @@ function enrichNotice(n) {
     out.title = (out.title || "").trim() || "Not Available";
     out.description = out.description !== undefined && out.description !== null ? String(out.description).trim() : "";
     out.postedBy = (out.postedBy || out.createdBy || "").trim() || "Admin";
+    out.audience = (out.audience || "").trim() || "All";
     out.priority = (out.priority || "").trim() || "Normal";
     out.status = (out.status || "").trim() || "Active";
     out.timestamp = getNoticeTimestamp(out);
@@ -70,6 +71,12 @@ export async function addNotice(req, res) {
     notice.createdAt = now;
     notice.updatedAt = now;
     notice.status = notice.status || "Active";
+    notice.audience = (notice.audience || "").trim() || "All";
+    if (!notice.postedBy && notice.createdBy) {
+        notice.postedBy = notice.createdBy;
+    } else if (!notice.postedBy) {
+        notice.postedBy = "Admin";
+    }
 
     const result = await db.collection("notices").insertOne(notice);
 

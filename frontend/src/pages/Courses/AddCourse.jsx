@@ -99,6 +99,23 @@ function AddCourse() {
             setIsSaving(false);
         }
     };
+
+    const handleReset = () => {
+        setCourse({
+            courseCode: "",
+            courseName: "",
+            category: "",
+            duration: "",
+            fees: "",
+            trainer: "",
+            batchSize: "",
+            description: "",
+            status: "Active"
+        });
+        setErrors({});
+        setApiError(null);
+        setApiSuccess(null);
+    };
         return (
 
         <AdminLayout>
@@ -390,10 +407,11 @@ function AddCourse() {
                             />
 
                             <Button
-                                type="reset"
+                                type="button"
                                 text="Reset"
                                 className="btn btn-warning"
                                 disabled={isSaving}
+                                onClick={handleReset}
                             />
 
                             <Button

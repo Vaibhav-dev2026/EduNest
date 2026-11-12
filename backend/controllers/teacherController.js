@@ -6,6 +6,24 @@ import { createNotification } from "./notificationController.js";
 
 function enrichTeacher(t) {
     const out = { ...t };
+
+    let firstName = (t.firstName || "").trim();
+    let lastName = (t.lastName || "").trim();
+    let fullName = (t.fullName || t.name || "").trim();
+
+    if (!fullName && (firstName || lastName)) {
+        fullName = `${firstName} ${lastName}`.trim();
+    } else if (fullName && (!firstName || !lastName)) {
+        const parts = fullName.split(" ").filter(Boolean);
+        if (!firstName) firstName = parts[0] || "";
+        if (!lastName) lastName = parts.slice(1).join(" ") || "";
+    }
+
+    out.firstName = firstName || (fullName ? fullName.split(" ")[0] : "Not Available");
+    out.lastName = lastName || (fullName ? fullName.split(" ").slice(1).join(" ") : "");
+    out.fullName = fullName || (firstName ? `${firstName} ${lastName}`.trim() : "Not Available");
+    out.name = out.fullName;
+
     out.joiningDateFormatted = formatDateDDMMYYYY(out.joiningDate || out.createdAt);
     out.dobFormatted = formatDateDDMMYYYY(out.dob || out.dateOfBirth);
 
@@ -107,9 +125,49 @@ export async function addTeacher(req, res) {
     const db = getDB();
     const teacher = req.body || {};
 
-    if (!teacher.firstName || !teacher.lastName) {
+    let firstName = (teacher.firstName || "").trim();
+    let lastName = (teacher.lastName || "").trim();
+    let fullName = (teacher.fullName || teacher.name || "").trim();
+
+    if ((!firstName || !lastName) && fullName) {
+        const parts = fullName.split(" ").filter(Boolean);
+        if (!firstName) firstName = parts[0] || "";
+        if (!lastName) lastName = parts.slice(1).join(" ") || "";
+    }
+
+    if (!firstName || !lastName) {
         return res.status(400).json({ success: false, message: "First name and last name are required." });
     }
+
+    // Validate Date of Birth: cannot be a future date
+    const rawDob = teacher.dob || teacher.dateOfBirth;
+    if (rawDob) {
+        const parsedDob = new Date(rawDob);
+        if (!isNaN(parsedDob.getTime())) {
+            const now = new Date();
+            if (parsedDob > now) {
+                return res.status(400).json({ success: false, message: "Date of Birth cannot be in the future." });
+            }
+        }
+    }
+
+    // Validate experience & salary as non-negative
+    if (teacher.experience !== undefined && teacher.experience !== null && String(teacher.experience).trim() !== "") {
+        const expNum = Number(teacher.experience);
+        if (isNaN(expNum) || expNum < 0) {
+            return res.status(400).json({ success: false, message: "Experience must be a non-negative number." });
+        }
+    }
+    if (teacher.salary !== undefined && teacher.salary !== null && String(teacher.salary).trim() !== "") {
+        const salNum = Number(teacher.salary);
+        if (isNaN(salNum) || salNum < 0) {
+            return res.status(400).json({ success: false, message: "Salary must be a non-negative amount." });
+        }
+    }
+
+    teacher.firstName = firstName;
+    teacher.lastName = lastName;
+    teacher.fullName = `${firstName} ${lastName}`.trim();
 
     const generatedId = await nextSequentialId(db, "teachers", "teacherId", "TCH");
     teacher.teacherId = generatedId;
@@ -184,6 +242,33 @@ export async function updateTeacher(req, res) {
     delete teacher.teacherId; // Never allow the unique teacherId to be overwritten
     teacher.updatedAt = new Date().toISOString();
 
+    // Normalize firstName, lastName, fullName
+    let firstName = teacher.firstName !== undefined ? String(teacher.firstName).trim() : null;
+    let lastName = teacher.lastName !== undefined ? String(teacher.lastName).trim() : null;
+    let fullName = teacher.fullName !== undefined ? String(teacher.fullName).trim() : null;
+
+    if (fullName && (!firstName || !lastName)) {
+        const parts = fullName.split(" ").filter(Boolean);
+        if (!firstName) firstName = parts[0] || "";
+        if (!lastName) lastName = parts.slice(1).join(" ") || "";
+    }
+    if (firstName !== null) teacher.firstName = firstName;
+    if (lastName !== null) teacher.lastName = lastName;
+    if (firstName && lastName) {
+        teacher.fullName = `${firstName} ${lastName}`.trim();
+    } else if (fullName) {
+        teacher.fullName = fullName;
+    }
+
+    // Validate DOB if updated
+    const rawDob = teacher.dob || teacher.dateOfBirth;
+    if (rawDob) {
+        const parsedDob = new Date(rawDob);
+        if (!isNaN(parsedDob.getTime()) && parsedDob > new Date()) {
+            return res.status(400).json({ success: false, message: "Date of Birth cannot be in the future." });
+        }
+    }
+
     const existing = await db.collection("teachers").findOne({ _id: new ObjectId(id) });
     if (!existing) {
         return res.status(404).json({ success: false, message: "Teacher Not Found" });
@@ -195,6 +280,9 @@ export async function updateTeacher(req, res) {
         const userUpdate = {};
         if (teacher.firstName) userUpdate.firstName = teacher.firstName;
         if (teacher.lastName) userUpdate.lastName = teacher.lastName;
+        if (teacher.fullName || (teacher.firstName && teacher.lastName)) {
+            userUpdate.fullName = teacher.fullName || `${teacher.firstName} ${teacher.lastName}`.trim();
+        }
         if (teacher.status) userUpdate.status = teacher.status;
         if (teacher.profilePhoto || teacher.photo) {
             userUpdate.profilePhoto = teacher.profilePhoto || teacher.photo;

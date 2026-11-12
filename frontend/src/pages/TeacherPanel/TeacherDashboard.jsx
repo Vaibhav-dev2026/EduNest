@@ -62,8 +62,14 @@ function TeacherDashboard() {
                 return 0;
             };
 
-            // Latest active notice (sorted newest first)
-            const activeNotices = (notices || []).filter(n => n.status !== "Inactive");
+            // Latest active notice for teachers (sorted newest first)
+            const activeNotices = (notices || []).filter(n => {
+                if (n.status === "Inactive") return false;
+                const audience = (n.audience || "").trim().toLowerCase();
+                // Show all except student-only notices
+                if (audience === "all students" || audience === "students") return false;
+                return true;
+            });
             const sortedNotices = [...activeNotices].sort((a, b) => (b.timestamp || getTimestamp(b, "date")) - (a.timestamp || getTimestamp(a, "date")));
             const latestNotice = sortedNotices.length > 0 ? sortedNotices[0] : null;
 

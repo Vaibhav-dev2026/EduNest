@@ -7,13 +7,29 @@ import EmptyState from "../../components/common/EmptyState";
 import SearchBox from "../../components/common/SearchBox";
 import { getCurrentUser } from "../../services/authService";
 import { getNotices, addNotice, updateNotice, deleteNotice } from "../../services/noticeService";
+import { getBatches } from "../../services/batchService";
 
-const EMPTY_FORM = { title: "", description: "", priority: "Medium", date: "" };
+// A notice is visible to teachers if audience is "All", "All Teachers", "Teachers",
+// created by this teacher, batch-specific, or is a legacy notice.
+// Excludes "All Students"/"Students" only notices created by others.
+function isNoticeForTeacher(notice, teacherName) {
+    const audience = (notice.audience || "").trim().toLowerCase();
+    const postedBy = (notice.postedBy || notice.createdBy || "").toLowerCase();
+    if (teacherName && postedBy && postedBy === teacherName.toLowerCase()) return true;
+    if (!audience || audience === "all" || audience === "all (students & teachers)") return true;
+    if (audience === "all teachers" || audience === "teachers") return true;
+    if (audience === "all students" || audience === "students") return false;
+    return true; // batch-specific, etc.
+}
+
+const EMPTY_FORM = { title: "", description: "", priority: "Medium", date: "", audience: "All Students" };
 
 function TeacherNotices() {
     const user = getCurrentUser() || {};
+    const teacherName = `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email || "Teacher";
 
     const [notices, setNotices] = useState([]);
+    const [batches, setBatches] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [search, setSearch] = useState("");
@@ -28,14 +44,19 @@ function TeacherNotices() {
         setLoading(true);
         setError(null);
         try {
-            const data = await getNotices();
-            setNotices(data);
+            const [data, batchesData] = await Promise.all([
+                getNotices(),
+                getBatches().catch(() => [])
+            ]);
+            const filtered = (data || []).filter(n => isNoticeForTeacher(n, teacherName));
+            setNotices(filtered);
+            setBatches(batchesData || []);
         } catch (err) {
             setError("Failed to load notices.");
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [teacherName]);
 
     useEffect(() => {
         loadNotices();
@@ -55,7 +76,13 @@ function TeacherNotices() {
     }
 
     function openEditForm(notice) {
-        setForm({ ...notice });
+        setForm({
+            title: notice.title || "",
+            description: notice.description || "",
+            priority: notice.priority || "Medium",
+            date: notice.date ? String(notice.date).split("T")[0] : "",
+            audience: notice.audience || "All Students",
+        });
         setEditId(notice._id);
         setFormError(null);
         setFormSuccess(null);
@@ -80,7 +107,9 @@ function TeacherNotices() {
         try {
             const noticeData = {
                 ...form,
-                createdBy: `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email,
+                postedBy: teacherName,
+                createdBy: teacherName,
+                role: "teacher",
             };
             if (editId) {
                 const updateData = { ...noticeData };
@@ -114,6 +143,14 @@ function TeacherNotices() {
         if (priority === "High") return <span className="badge bg-danger">High</span>;
         if (priority === "Medium") return <span className="badge bg-warning text-dark">Medium</span>;
         return <span className="badge bg-info">Low</span>;
+    };
+
+    const getAudienceBadge = (audience) => {
+        const a = (audience || "All").trim();
+        if (a === "All Teachers" || a === "Teachers") return <span className="badge bg-primary">{a}</span>;
+        if (a === "All Students" || a === "Students") return <span className="badge bg-success">{a}</span>;
+        if (a === "All" || a === "All (Students & Teachers)") return <span className="badge bg-secondary">{a}</span>;
+        return <span className="badge bg-info">{a}</span>;
     };
 
     const filtered = notices.filter(n => {
@@ -151,6 +188,17 @@ function TeacherNotices() {
                                 <div className="col-md-3 mb-3">
                                     <label className="form-label">Date</label>
                                     <input type="date" className="form-control" name="date" value={form.date} onChange={handleChange} />
+                                </div>
+                                <div className="col-md-6 mb-3">
+                                    <label className="form-label">Audience</label>
+                                    <select className="form-select" name="audience" value={form.audience} onChange={handleChange}>
+                                        <option value="All Students">All Students</option>
+                                        <option value="All Teachers">All Teachers</option>
+                                        <option value="All">All (Students &amp; Teachers)</option>
+                                        {batches.map(b => (
+                                            <option key={b._id} value={b.batchName || b.name}>{b.batchName || b.name} (Batch)</option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <div className="col-12 mb-3">
                                     <label className="form-label">Description <span className="text-danger">*</span></label>
@@ -197,6 +245,7 @@ function TeacherNotices() {
                                     <th>Date</th>
                                     <th>Title</th>
                                     <th>Description</th>
+                                    <th>Audience</th>
                                     <th>Priority</th>
                                     <th>Actions</th>
                                 </tr>
@@ -210,6 +259,7 @@ function TeacherNotices() {
                                         <td style={{ maxWidth: "250px" }} className="text-truncate" title={notice.description}>
                                             {notice.description || "—"}
                                         </td>
+                                        <td>{getAudienceBadge(notice.audience)}</td>
                                         <td>{getPriorityBadge(notice.priority)}</td>
                                         <td>
                                             <div className="d-flex gap-1">

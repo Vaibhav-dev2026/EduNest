@@ -5,7 +5,7 @@ import { fileURLToPath } from "url";
 import fs from "fs";
 import crypto from "crypto";
 
-import { getMaterials, getMaterialById, addMaterial, deleteMaterial } from "../controllers/materialController.js";
+import { getMaterials, getMaterialById, addMaterial, deleteMaterial, downloadMaterial } from "../controllers/materialController.js";
 import { authenticate } from "../middleware/auth.js";
 import { asyncHandler } from "../middleware/errorHandler.js";
 
@@ -98,6 +98,7 @@ const router = Router();
 
 router.get("/", authenticate(["admin", "teacher", "student"]), asyncHandler(getMaterials));
 router.post("/", authenticate(["admin", "teacher"]), handleMulterUpload, asyncHandler(addMaterial));
+router.get("/:id/download", authenticate(["admin", "teacher", "student"]), asyncHandler(downloadMaterial));
 router.get("/:id", authenticate(["admin", "teacher", "student"]), asyncHandler(getMaterialById));
 router.delete("/:id", authenticate(["admin", "teacher"]), asyncHandler(deleteMaterial));
 

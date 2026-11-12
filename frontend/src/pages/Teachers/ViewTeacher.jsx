@@ -50,8 +50,10 @@ function ViewTeacher() {
         );
     }
 
-    const name = teacher.fullName || teacher.name || "Teacher";
-    const initials = name.split(" ").map(n => n[0]).slice(0, 2).join("");
+    const name = (teacher.firstName && teacher.lastName && teacher.firstName !== "Not Available")
+        ? `${teacher.firstName} ${teacher.lastName}`.trim()
+        : (teacher.fullName || teacher.name || teacher.firstName || "Teacher");
+    const initials = (name && name !== "Teacher" ? name.split(" ").map(n => n[0]).slice(0, 2).join("") : "T").toUpperCase();
 
     return (
         <AdminLayout>
