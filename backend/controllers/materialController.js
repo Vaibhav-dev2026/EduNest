@@ -334,7 +334,7 @@ export async function downloadMaterial(req, res) {
 
     const fileUrl = material.fileUrl || "";
     if (!fileUrl || !fileUrl.startsWith("/uploads/materials/")) {
-        return res.status(404).json({ success: false, message: "File not available for download." });
+        return res.status(404).json({ success: false, message: "File not available for download. No file was attached to this material." });
     }
 
     const filename = path.basename(fileUrl);
@@ -345,7 +345,13 @@ export async function downloadMaterial(req, res) {
 
     const filePath = path.join(UPLOADS_DIR, filename);
     if (!fs.existsSync(filePath)) {
-        return res.status(404).json({ success: false, message: "File not found on server." });
+        return res.status(404).json({ success: false, message: "File not found on server. It may have been deleted or not uploaded properly." });
+    }
+
+    // Check file size — reject suspiciously small (corrupt/stub) files
+    const stat = fs.statSync(filePath);
+    if (stat.size < 100) {
+        return res.status(422).json({ success: false, message: "File appears to be corrupt or empty. Please re-upload the material." });
     }
 
     const originalName = material.fileName || filename;
@@ -367,9 +373,11 @@ export async function downloadMaterial(req, res) {
     res.setHeader("Content-Type", mimeType);
     res.setHeader("Content-Disposition", `attachment; filename="${safeOriginalName}"`);
     res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Content-Length", stat.size);
 
     const stream = fs.createReadStream(filePath);
-    stream.on("error", () => {
+    stream.on("error", (streamErr) => {
+        console.error("Stream error:", streamErr);
         if (!res.headersSent) {
             res.status(500).json({ success: false, message: "Error streaming file." });
         }

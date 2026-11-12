@@ -12,6 +12,7 @@ function StudentMaterials() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [downloading, setDownloading] = useState(null);
+    const [downloadError, setDownloadError] = useState(null);
 
     const loadMaterials = React.useCallback(async () => {
         try {
@@ -59,8 +60,11 @@ function StudentMaterials() {
 
     const handleDownload = async (item) => {
         setDownloading(item._id);
+        setDownloadError(null);
         try {
             await downloadMaterialFile(item._id, item.fileName || item.title || "download");
+        } catch (err) {
+            setDownloadError(err.message || "Download failed. Please try again.");
         } finally {
             setDownloading(null);
         }
@@ -72,6 +76,10 @@ function StudentMaterials() {
             
             {loading && <Loader text="Loading study materials..." />}
             {error && <div className="alert alert-danger mt-4">{error}</div>}
+            {downloadError && <div className="alert alert-warning mt-4 d-flex justify-content-between align-items-center">
+                <span><i className="bi bi-exclamation-triangle me-2"></i>{downloadError}</span>
+                <button className="btn-close" onClick={() => setDownloadError(null)}></button>
+            </div>}
             
             {!loading && !error && (
                 <div className="card shadow-sm border-0 mt-4">
@@ -99,7 +107,7 @@ function StudentMaterials() {
                                         const courseName = resolveCourseName(item);
                                         const batchName = resolveBatchName(item);
                                         const matType = item.materialType || item.type || "Not Available";
-                                        const hasFile = Boolean(item.fileUrl && !item.fileUrl.startsWith("C:\\"));
+                                        const hasFile = Boolean(item._id && item.fileUrl && !item.fileUrl.startsWith("C:\\"));
                                         return (
                                             <tr key={item._id || idx}>
                                                 <td className="fw-medium text-dark">{item.title || "Not Available"}</td>

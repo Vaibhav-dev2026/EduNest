@@ -18,9 +18,14 @@ export async function deleteMaterial(id) {
 
 /**
  * Download a material file via the authenticated streaming endpoint.
- * Falls back to direct URL for cross-origin if token not available.
+ * Uses token in Authorization header (primary) or as query param (fallback).
  */
 export async function downloadMaterialFile(id, fileName) {
+    if (!id) {
+        alert("Cannot download: Material ID is missing.");
+        return;
+    }
+
     const token = getToken();
     const url = `${BASE_URL}/materials/${id}/download`;
 
@@ -31,12 +36,24 @@ export async function downloadMaterialFile(id, fileName) {
         });
 
         if (!response.ok) {
-            throw new Error(`Download failed: ${response.status}`);
+            // Parse the error response for user-friendly message
+            let errMsg = `Download failed (HTTP ${response.status})`;
+            try {
+                const contentType = response.headers.get("content-type") || "";
+                if (contentType.includes("application/json")) {
+                    const json = await response.json();
+                    errMsg = json.message || errMsg;
+                }
+            } catch (_) { /* ignore parse error */ }
+            throw new Error(errMsg);
         }
 
         const blob = await response.blob();
-        const objectUrl = URL.createObjectURL(blob);
+        if (!blob || blob.size === 0) {
+            throw new Error("Downloaded file is empty. The file may be missing on the server.");
+        }
 
+        const objectUrl = URL.createObjectURL(blob);
         const anchor = document.createElement("a");
         anchor.href = objectUrl;
         anchor.download = fileName || "download";
@@ -46,8 +63,13 @@ export async function downloadMaterialFile(id, fileName) {
         setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
     } catch (err) {
         console.error("downloadMaterialFile error:", err);
-        // Fallback: open in new tab
-        window.open(url, "_blank");
+        // Fallback: open in a new tab with token as query param (browser-compatible)
+        if (token) {
+            const fallbackUrl = `${url}?token=${encodeURIComponent(token)}`;
+            window.open(fallbackUrl, "_blank");
+        } else {
+            alert(`Download failed: ${err.message || "Unknown error. Please log in and try again."}`);
+        }
     }
 }
 

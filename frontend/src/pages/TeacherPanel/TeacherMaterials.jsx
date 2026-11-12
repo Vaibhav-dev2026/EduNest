@@ -39,6 +39,7 @@ function TeacherMaterials() {
     const [formError, setFormError] = useState(null);
     const [formSuccess, setFormSuccess] = useState(null);
     const [downloading, setDownloading] = useState(null);
+    const [downloadError, setDownloadError] = useState(null);
 
     const loadMaterials = React.useCallback(async () => {
         setLoading(true);
@@ -150,8 +151,11 @@ function TeacherMaterials() {
 
     async function handleDownload(item) {
         setDownloading(item._id);
+        setDownloadError(null);
         try {
             await downloadMaterialFile(item._id, item.fileName || item.title || "download");
+        } catch (err) {
+            setDownloadError(err.message || "Download failed. Please try again.");
         } finally {
             setDownloading(null);
         }
@@ -272,6 +276,10 @@ function TeacherMaterials() {
                     </div>
 
                     {error && <div className="alert alert-danger">{error}</div>}
+                    {downloadError && <div className="alert alert-warning d-flex justify-content-between align-items-center">
+                        <span><i className="bi bi-exclamation-triangle me-2"></i>{downloadError}</span>
+                        <button className="btn-close" onClick={() => setDownloadError(null)}></button>
+                    </div>}
 
                     {loading ? <Loader text="Loading materials..." /> : filtered.length === 0 ? (
                         <EmptyState title="No Study Materials" icon="bi-file-earmark-text" />
@@ -294,7 +302,7 @@ function TeacherMaterials() {
                             <tbody>
                                 {filtered.map((item, idx) => {
                                     const fileUrl = item.fileUrl ? getFileUrl(item.fileUrl) : (item.link ? item.link : "");
-                                    const hasValidFile = Boolean(fileUrl && !fileUrl.endsWith("/") && !item.fileUrl?.startsWith("C:\\"));
+                                    const hasValidFile = Boolean(item._id && fileUrl && !fileUrl.endsWith("/") && !item.fileUrl?.startsWith("C:\\"));
                                     return (
                                         <tr key={item._id || idx}>
                                             <td>{idx + 1}</td>
