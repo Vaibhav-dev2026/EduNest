@@ -34,6 +34,13 @@ function safeDeleteOldPhoto(photoPath) {
     }
 }
 
+function userUpdateApplied(userVal, fallbackVal) {
+    if (userVal !== undefined && userVal !== null && String(userVal).trim() !== "") {
+        return String(userVal).trim();
+    }
+    return fallbackVal || "";
+}
+
 /**
  * GET /profile
  * Retrieves the fresh profile data for the authenticated user across Admin, Teacher, or Student.
@@ -64,14 +71,19 @@ export async function getProfile(req, res) {
     };
 
     if (userRole === "teacher") {
-        const teacherRef = currentUser.referenceId || currentUser.teacherId || "";
+        const teacherRef = (currentUser.referenceId || currentUser.teacherId || "").trim();
         let teacher = null;
         if (teacherRef) {
             teacher = await resolveReference(db, "teachers", teacherRef, "teacherId");
         }
         if (!teacher && currentUser.email) {
             teacher = await db.collection("teachers").findOne({
-                email: { $regex: new RegExp(`^${currentUser.email}$`, "i") }
+                email: { $regex: new RegExp(`^${currentUser.email.trim()}$`, "i") }
+            });
+        }
+        if (!teacher && teacherRef) {
+            teacher = await db.collection("teachers").findOne({
+                teacherId: { $regex: new RegExp(`^${teacherRef}$`, "i") }
             });
         }
 
@@ -82,12 +94,12 @@ export async function getProfile(req, res) {
                 id: currentUser._id,
                 _id: teacher._id,
                 teacherId: teacher.teacherId || teacherRef,
-                firstName: teacher.firstName || profileData.firstName,
-                lastName: teacher.lastName || profileData.lastName,
-                fullName: `${teacher.firstName || profileData.firstName || ""} ${teacher.lastName || profileData.lastName || ""}`.trim(),
-                email: teacher.email || profileData.email,
-                mobile: teacher.mobile || profileData.mobile,
-                gender: teacher.gender || profileData.gender,
+                firstName: userUpdateApplied(currentUser.firstName, teacher.firstName),
+                lastName: userUpdateApplied(currentUser.lastName, teacher.lastName),
+                fullName: `${userUpdateApplied(currentUser.firstName, teacher.firstName) || ""} ${userUpdateApplied(currentUser.lastName, teacher.lastName) || ""}`.trim() || currentUser.fullName || "Teacher",
+                email: currentUser.email || teacher.email,
+                mobile: currentUser.mobile || teacher.mobile || "",
+                gender: currentUser.gender || teacher.gender || "",
                 dob: teacher.dob || teacher.dateOfBirth || "",
                 dobFormatted: formatDateDDMMYYYY(teacher.dob || teacher.dateOfBirth),
                 qualification: teacher.qualification || "",
@@ -97,21 +109,26 @@ export async function getProfile(req, res) {
                 joiningDate: teacher.joiningDate || "",
                 joiningDateFormatted: formatDateDDMMYYYY(teacher.joiningDate || teacher.createdAt),
                 salary: teacher.salary || "",
-                address: teacher.address || profileData.address,
+                address: currentUser.address || teacher.address || "",
                 status: teacher.status || profileData.status,
-                profilePhoto: teacher.profilePhoto || teacher.photo || profileData.profilePhoto,
-                photo: teacher.profilePhoto || teacher.photo || profileData.photo
+                profilePhoto: currentUser.profilePhoto || teacher.profilePhoto || teacher.photo || profileData.profilePhoto,
+                photo: currentUser.profilePhoto || teacher.profilePhoto || teacher.photo || profileData.photo
             };
         }
     } else if (userRole === "student") {
-        const studentRef = currentUser.referenceId || currentUser.studentId || "";
+        const studentRef = (currentUser.referenceId || currentUser.studentId || "").trim();
         let student = null;
         if (studentRef) {
             student = await resolveReference(db, "students", studentRef, "studentId");
         }
         if (!student && currentUser.email) {
             student = await db.collection("students").findOne({
-                email: { $regex: new RegExp(`^${currentUser.email}$`, "i") }
+                email: { $regex: new RegExp(`^${currentUser.email.trim()}$`, "i") }
+            });
+        }
+        if (!student && studentRef) {
+            student = await db.collection("students").findOne({
+                studentId: { $regex: new RegExp(`^${studentRef}$`, "i") }
             });
         }
 
@@ -134,12 +151,12 @@ export async function getProfile(req, res) {
                 id: currentUser._id,
                 _id: student._id,
                 studentId: student.studentId || studentRef,
-                firstName: student.firstName || profileData.firstName,
-                lastName: student.lastName || profileData.lastName,
-                fullName: `${student.firstName || profileData.firstName || ""} ${student.lastName || profileData.lastName || ""}`.trim(),
-                email: student.email || profileData.email,
-                mobile: student.mobile || profileData.mobile,
-                gender: student.gender || profileData.gender,
+                firstName: userUpdateApplied(currentUser.firstName, student.firstName),
+                lastName: userUpdateApplied(currentUser.lastName, student.lastName),
+                fullName: `${userUpdateApplied(currentUser.firstName, student.firstName) || ""} ${userUpdateApplied(currentUser.lastName, student.lastName) || ""}`.trim() || currentUser.fullName || "Student",
+                email: currentUser.email || student.email,
+                mobile: currentUser.mobile || student.mobile || "",
+                gender: currentUser.gender || student.gender || "",
                 dob: student.dob || student.dateOfBirth || "",
                 dobFormatted: formatDateDDMMYYYY(student.dob || student.dateOfBirth),
                 courseId: student.courseId || "",
@@ -148,10 +165,10 @@ export async function getProfile(req, res) {
                 batchName: batchName || student.batch || "",
                 joiningDate: student.joiningDate || "",
                 joiningDateFormatted: formatDateDDMMYYYY(student.joiningDate || student.createdAt),
-                address: student.address || profileData.address,
+                address: currentUser.address || student.address || "",
                 status: student.status || profileData.status,
-                profilePhoto: student.profilePhoto || student.photo || profileData.profilePhoto,
-                photo: student.profilePhoto || student.photo || profileData.photo
+                profilePhoto: currentUser.profilePhoto || student.profilePhoto || student.photo || profileData.profilePhoto,
+                photo: currentUser.profilePhoto || student.profilePhoto || student.photo || profileData.photo
             };
         }
     }
@@ -228,70 +245,74 @@ export async function updateProfile(req, res) {
 
     // ── If Teacher: update linked teachers document ──
     if (userRole === "teacher") {
-        const teacherRef = currentUser.referenceId || currentUser.teacherId || "";
-        let teacherFilter = null;
+        const teacherRef = (currentUser.referenceId || currentUser.teacherId || "").trim();
+        let existingTeacher = null;
         if (teacherRef) {
-            teacherFilter = { teacherId: { $regex: new RegExp(`^${teacherRef}$`, "i") } };
-        } else if (currentUser.email) {
-            teacherFilter = { email: { $regex: new RegExp(`^${currentUser.email}$`, "i") } };
+            existingTeacher = await db.collection("teachers").findOne({
+                teacherId: { $regex: new RegExp(`^${teacherRef}$`, "i") }
+            });
+        }
+        if (!existingTeacher && currentUser.email) {
+            existingTeacher = await db.collection("teachers").findOne({
+                email: { $regex: new RegExp(`^${currentUser.email.trim()}$`, "i") }
+            });
         }
 
-        if (teacherFilter) {
-            const existingTeacher = await db.collection("teachers").findOne(teacherFilter);
-            if (existingTeacher) {
-                const teacherUpdate = { updatedAt: now };
-                if (userUpdate.firstName) teacherUpdate.firstName = userUpdate.firstName;
-                if (userUpdate.lastName) teacherUpdate.lastName = userUpdate.lastName;
-                if (userUpdate.mobile !== undefined) teacherUpdate.mobile = userUpdate.mobile;
-                if (userUpdate.gender !== undefined) teacherUpdate.gender = userUpdate.gender;
-                if (userUpdate.address !== undefined) teacherUpdate.address = userUpdate.address;
-                if (userUpdate.profilePhoto) {
-                    teacherUpdate.profilePhoto = userUpdate.profilePhoto;
-                    teacherUpdate.photo = userUpdate.profilePhoto;
-                }
-
-                if (body.dob !== undefined) teacherUpdate.dob = body.dob;
-                if (body.qualification !== undefined) teacherUpdate.qualification = String(body.qualification).trim();
-                if (body.specialization !== undefined) teacherUpdate.specialization = String(body.specialization).trim();
-                if (body.subject !== undefined) teacherUpdate.subject = String(body.subject).trim();
-                if (body.experience !== undefined) teacherUpdate.experience = body.experience;
-                if (body.salary !== undefined) teacherUpdate.salary = body.salary;
-                if (body.joiningDate !== undefined) teacherUpdate.joiningDate = body.joiningDate;
-
-                await db.collection("teachers").updateOne({ _id: existingTeacher._id }, { $set: teacherUpdate });
+        if (existingTeacher) {
+            const teacherUpdate = { updatedAt: now };
+            if (userUpdate.firstName) teacherUpdate.firstName = userUpdate.firstName;
+            if (userUpdate.lastName) teacherUpdate.lastName = userUpdate.lastName;
+            if (userUpdate.mobile !== undefined) teacherUpdate.mobile = userUpdate.mobile;
+            if (userUpdate.gender !== undefined) teacherUpdate.gender = userUpdate.gender;
+            if (userUpdate.address !== undefined) teacherUpdate.address = userUpdate.address;
+            if (userUpdate.profilePhoto) {
+                teacherUpdate.profilePhoto = userUpdate.profilePhoto;
+                teacherUpdate.photo = userUpdate.profilePhoto;
             }
+
+            if (body.dob !== undefined) teacherUpdate.dob = body.dob;
+            if (body.qualification !== undefined) teacherUpdate.qualification = String(body.qualification).trim();
+            if (body.specialization !== undefined) teacherUpdate.specialization = String(body.specialization).trim();
+            if (body.subject !== undefined) teacherUpdate.subject = String(body.subject).trim();
+            if (body.experience !== undefined) teacherUpdate.experience = body.experience;
+            if (body.salary !== undefined) teacherUpdate.salary = body.salary;
+            if (body.joiningDate !== undefined) teacherUpdate.joiningDate = body.joiningDate;
+
+            await db.collection("teachers").updateOne({ _id: existingTeacher._id }, { $set: teacherUpdate });
         }
     }
 
     // ── If Student: update linked students document ──
     if (userRole === "student") {
-        const studentRef = currentUser.referenceId || currentUser.studentId || "";
-        let studentFilter = null;
+        const studentRef = (currentUser.referenceId || currentUser.studentId || "").trim();
+        let existingStudent = null;
         if (studentRef) {
-            studentFilter = { studentId: { $regex: new RegExp(`^${studentRef}$`, "i") } };
-        } else if (currentUser.email) {
-            studentFilter = { email: { $regex: new RegExp(`^${currentUser.email}$`, "i") } };
+            existingStudent = await db.collection("students").findOne({
+                studentId: { $regex: new RegExp(`^${studentRef}$`, "i") }
+            });
+        }
+        if (!existingStudent && currentUser.email) {
+            existingStudent = await db.collection("students").findOne({
+                email: { $regex: new RegExp(`^${currentUser.email.trim()}$`, "i") }
+            });
         }
 
-        if (studentFilter) {
-            const existingStudent = await db.collection("students").findOne(studentFilter);
-            if (existingStudent) {
-                const studentUpdate = { updatedAt: now };
-                if (userUpdate.firstName) studentUpdate.firstName = userUpdate.firstName;
-                if (userUpdate.lastName) studentUpdate.lastName = userUpdate.lastName;
-                if (userUpdate.mobile !== undefined) studentUpdate.mobile = userUpdate.mobile;
-                if (userUpdate.gender !== undefined) studentUpdate.gender = userUpdate.gender;
-                if (userUpdate.address !== undefined) studentUpdate.address = userUpdate.address;
-                if (userUpdate.profilePhoto) {
-                    studentUpdate.profilePhoto = userUpdate.profilePhoto;
-                    studentUpdate.photo = userUpdate.profilePhoto;
-                }
-
-                if (body.dob !== undefined) studentUpdate.dob = body.dob;
-                if (body.joiningDate !== undefined) studentUpdate.joiningDate = body.joiningDate;
-
-                await db.collection("students").updateOne({ _id: existingStudent._id }, { $set: studentUpdate });
+        if (existingStudent) {
+            const studentUpdate = { updatedAt: now };
+            if (userUpdate.firstName) studentUpdate.firstName = userUpdate.firstName;
+            if (userUpdate.lastName) studentUpdate.lastName = userUpdate.lastName;
+            if (userUpdate.mobile !== undefined) studentUpdate.mobile = userUpdate.mobile;
+            if (userUpdate.gender !== undefined) studentUpdate.gender = userUpdate.gender;
+            if (userUpdate.address !== undefined) studentUpdate.address = userUpdate.address;
+            if (userUpdate.profilePhoto) {
+                studentUpdate.profilePhoto = userUpdate.profilePhoto;
+                studentUpdate.photo = userUpdate.profilePhoto;
             }
+
+            if (body.dob !== undefined) studentUpdate.dob = body.dob;
+            if (body.joiningDate !== undefined) studentUpdate.joiningDate = body.joiningDate;
+
+            await db.collection("students").updateOne({ _id: existingStudent._id }, { $set: studentUpdate });
         }
     }
 
