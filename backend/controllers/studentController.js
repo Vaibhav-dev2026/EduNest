@@ -9,6 +9,7 @@ import {
 } from "../utils/helpers.js";
 import { createNotification } from "./notificationController.js";
 import { emitEvent } from "../services/socketService.js";
+import { validateRequired, validateEmail, validateMobile } from "../utils/validate.js";
 
 async function enrichStudent(db, student, cache = {}) {
     const out = { ...student };
@@ -127,8 +128,19 @@ export async function addStudent(req, res) {
     const db = getDB();
     const student = req.body || {};
 
-    if (!student.firstName || !student.lastName) {
-        return res.status(400).json({ success: false, message: "First name and last name are required." });
+    const errors = {};
+    errors.firstName = validateRequired(student.firstName, "First Name");
+    errors.lastName = validateRequired(student.lastName, "Last Name");
+    if (student.email) errors.email = validateEmail(student.email, false);
+    if (student.mobile) errors.mobile = validateMobile(student.mobile, false);
+    const errorMessages = Object.values(errors).filter(Boolean);
+    if (errorMessages.length > 0) {
+        return res.status(400).json({ success: false, message: errorMessages[0] });
+    }
+    // Also check duplicate email
+    if ((student.email || "").trim()) {
+        const dup = await db.collection("users").findOne({ email: (student.email).trim().toLowerCase() });
+        if (dup) return res.status(409).json({ success: false, message: "This email address is already registered." });
     }
 
     const generatedId = await nextSequentialId(db, "students", "studentId", "EDU");

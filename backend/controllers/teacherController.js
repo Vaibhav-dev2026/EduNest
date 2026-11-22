@@ -4,6 +4,7 @@ import { hashPassword } from "../utils/password.js";
 import { isValidObjectId, formatDateDDMMYYYY, nextSequentialId } from "../utils/helpers.js";
 import { createNotification } from "./notificationController.js";
 import { emitEvent } from "../services/socketService.js";
+import { validateRequired, validateEmail, validateMobile } from "../utils/validate.js";
 
 function enrichTeacher(t) {
     const out = { ...t };
@@ -138,6 +139,27 @@ export async function addTeacher(req, res) {
 
     if (!firstName || !lastName) {
         return res.status(400).json({ success: false, message: "First name and last name are required." });
+    }
+
+    // Validate specialization is required
+    const specializationVal = (teacher.specialization || teacher.subject || "").trim();
+    if (!specializationVal) {
+        return res.status(400).json({ success: false, message: "Specialization / Subject is required." });
+    }
+
+    // Validate email format if provided
+    if ((teacher.email || "").trim()) {
+        const emailErr = validateEmail(teacher.email, false);
+        if (emailErr) return res.status(400).json({ success: false, message: emailErr });
+        // Duplicate email check
+        const dup = await db.collection("users").findOne({ email: teacher.email.trim().toLowerCase() });
+        if (dup) return res.status(409).json({ success: false, message: "This email address is already registered." });
+    }
+
+    // Validate mobile format if provided
+    if ((teacher.mobile || "").trim()) {
+        const mobileErr = validateMobile(teacher.mobile, false);
+        if (mobileErr) return res.status(400).json({ success: false, message: mobileErr });
     }
 
     // Validate Date of Birth: cannot be a future date

@@ -4,6 +4,7 @@ import PageHeader from "../../components/common/PageHeader";
 import Loader from "../../components/common/Loader";
 import { getProfile, updateProfile } from "../../services/profileService";
 import { getFileUrl } from "../../services/api";
+import { validateMobile } from "../../utils/validators";
 
 function NA(value) {
     if (value === null || value === undefined || String(value).trim() === "") {
@@ -23,6 +24,7 @@ function AdminProfile() {
     const [saving, setSaving] = useState(false);
     const [successMsg, setSuccessMsg] = useState(null);
     const [saveError, setSaveError] = useState(null);
+    const [fieldErrors, setFieldErrors] = useState({});
 
     useEffect(() => {
         loadProfile();
@@ -54,6 +56,9 @@ function AdminProfile() {
     function handleChange(e) {
         const { name, value } = e.target;
         setForm(prev => ({ ...prev, [name]: value }));
+        if (fieldErrors[name]) {
+            setFieldErrors(prev => ({ ...prev, [name]: "" }));
+        }
     }
 
     function handlePhotoChange(e) {
@@ -66,9 +71,24 @@ function AdminProfile() {
 
     async function handleSave(e) {
         e.preventDefault();
-        setSaving(true);
         setSaveError(null);
         setSuccessMsg(null);
+
+        const errors = {};
+        if (!form.firstName || form.firstName.trim() === "") {
+            errors.firstName = "First Name is required.";
+        }
+        if (form.mobile && form.mobile.trim() !== "") {
+            const mErr = validateMobile(form.mobile, false);
+            if (mErr) errors.mobile = mErr;
+        }
+
+        if (Object.keys(errors).length > 0) {
+            setFieldErrors(errors);
+            return;
+        }
+
+        setSaving(true);
 
         try {
             const formData = new FormData();
@@ -216,15 +236,18 @@ function AdminProfile() {
                                     </div>
 
                                     <div className="col-md-6 mb-3">
-                                        <label className="form-label">First Name</label>
+                                        <label className="form-label">First Name <span className="text-danger">*</span></label>
                                         <input
                                             type="text"
-                                            className="form-control"
+                                            className={`form-control ${fieldErrors.firstName ? "is-invalid" : ""}`}
                                             name="firstName"
                                             value={form.firstName}
                                             onChange={handleChange}
                                             required
                                         />
+                                        {fieldErrors.firstName && (
+                                            <small className="text-danger d-block mt-1">{fieldErrors.firstName}</small>
+                                        )}
                                     </div>
 
                                     <div className="col-md-6 mb-3">
@@ -242,11 +265,15 @@ function AdminProfile() {
                                         <label className="form-label">Mobile Number</label>
                                         <input
                                             type="text"
-                                            className="form-control"
+                                            className={`form-control ${fieldErrors.mobile ? "is-invalid" : ""}`}
                                             name="mobile"
                                             value={form.mobile}
                                             onChange={handleChange}
+                                            placeholder="10-digit mobile number"
                                         />
+                                        {fieldErrors.mobile && (
+                                            <small className="text-danger d-block mt-1">{fieldErrors.mobile}</small>
+                                        )}
                                     </div>
 
                                     <div className="col-md-6 mb-3">

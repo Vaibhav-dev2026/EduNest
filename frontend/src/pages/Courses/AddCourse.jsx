@@ -57,21 +57,25 @@ function AddCourse() {
 
         let validationErrors = {};
 
-        if (course.courseName.trim() === "") {
+        if (!course.courseName || course.courseName.trim() === "") {
 
-            validationErrors.courseName = "Course Name is required";
-
-        }
-
-        if (course.duration.trim() === "") {
-
-            validationErrors.duration = "Duration is required";
+            validationErrors.courseName = "Course Name is required.";
 
         }
 
-        if (course.fees === "") {
+        if (!course.duration || course.duration.trim() === "") {
 
-            validationErrors.fees = "Course Fee is required";
+            validationErrors.duration = "Duration is required.";
+
+        }
+
+        if (String(course.fees).trim() === "") {
+
+            validationErrors.fees = "Course Fee is required.";
+
+        } else if (isNaN(Number(course.fees)) || Number(course.fees) < 0) {
+
+            validationErrors.fees = "Course Fee must be a non-negative number.";
 
         }
 

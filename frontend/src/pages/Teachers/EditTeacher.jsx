@@ -8,6 +8,7 @@ import Input from "../../components/common/Input";
 import Loader from "../../components/common/Loader";
 
 import { getTeacherById, updateTeacher } from "../../services/teacherService";
+import { validateMobile, validateEmail } from "../../utils/validators";
 
 function EditTeacher() {
     const navigate = useNavigate();
@@ -96,25 +97,27 @@ function EditTeacher() {
         let validationErrors = {};
 
         if (!teacher.firstName || teacher.firstName.trim() === "") {
-            validationErrors.firstName = "First Name is required";
+            validationErrors.firstName = "First Name is required.";
         }
 
         if (!teacher.lastName || teacher.lastName.trim() === "") {
-            validationErrors.lastName = "Last Name is required";
+            validationErrors.lastName = "Last Name is required.";
         }
 
-        if (teacher.mobile && !/^[0-9]{10}$/.test(teacher.mobile.trim())) {
-            validationErrors.mobile = "Enter valid 10-digit Mobile Number";
+        if (teacher.mobile) {
+            const mobileErr = validateMobile(teacher.mobile, false);
+            if (mobileErr) validationErrors.mobile = mobileErr;
         }
 
-        if (teacher.email && !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(teacher.email.trim())) {
-            validationErrors.email = "Enter valid Email address";
+        if (teacher.email) {
+            const emailErr = validateEmail(teacher.email, false);
+            if (emailErr) validationErrors.email = emailErr;
         }
 
         if (teacher.dob) {
             const dobDate = new Date(teacher.dob);
             if (!isNaN(dobDate.getTime()) && dobDate > new Date()) {
-                validationErrors.dob = "Date of Birth cannot be in the future";
+                validationErrors.dob = "Date of Birth cannot be in the future.";
             }
         }
 

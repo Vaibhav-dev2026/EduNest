@@ -3,6 +3,7 @@ import { getDB } from "../config/database.js";
 import { isValidObjectId, formatDateDDMMYYYY, resolveReference, nextSequentialId } from "../utils/helpers.js";
 import { createNotification } from "./notificationController.js";
 import { emitEvent } from "../services/socketService.js";
+import { validateNumeric } from "../utils/validate.js";
 
 function computeAmounts(fee) {
     const total = Math.max(0, Number(fee.totalFee) || 0);
@@ -107,6 +108,16 @@ export async function addFee(req, res) {
 
     if (!fee.studentId) {
         return res.status(400).json({ success: false, message: "Student is required." });
+    }
+
+    if (fee.totalFee !== undefined && fee.totalFee !== "") {
+        const totalErr = validateNumeric(fee.totalFee, "Total Fee", { min: 0 });
+        if (totalErr) return res.status(400).json({ success: false, message: totalErr });
+    }
+
+    if (fee.paidFee !== undefined && fee.paidFee !== "") {
+        const paidErr = validateNumeric(fee.paidFee, "Paid Fee", { min: 0 });
+        if (paidErr) return res.status(400).json({ success: false, message: paidErr });
     }
 
     // ── Validate transactionId uniqueness (only if provided) ──────────────────

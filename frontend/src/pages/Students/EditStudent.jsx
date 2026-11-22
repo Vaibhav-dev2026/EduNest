@@ -7,6 +7,9 @@ import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
 
 import { getStudentById, updateStudent } from "../../services/studentService";
+import { getCourses } from "../../services/courseService";
+import { getBatches } from "../../services/batchService";
+import { validateMobile, validateEmail } from "../../utils/validators";
 
 function EditStudent() {
 
@@ -45,6 +48,19 @@ function EditStudent() {
     const [isSaving, setIsSaving] = useState(false);
     const [apiError, setApiError] = useState(null);
     const [apiSuccess, setApiSuccess] = useState(null);
+    const [courses, setCourses] = useState([]);
+    const [batches, setBatches] = useState([]);
+
+    useEffect(() => {
+        getCourses().then(data => {
+            if (Array.isArray(data)) setCourses(data);
+            else if (data && Array.isArray(data.courses)) setCourses(data.courses);
+        }).catch(() => setCourses([]));
+        getBatches().then(data => {
+            if (Array.isArray(data)) setBatches(data);
+            else if (data && Array.isArray(data.batches)) setBatches(data.batches);
+        }).catch(() => setBatches([]));
+    }, []);
 
     useEffect(() => {
         async function loadStudent() {
@@ -79,27 +95,28 @@ function EditStudent() {
         let validationErrors = {};
 
         if (student.firstName.trim() === "") {
-
-            validationErrors.firstName = "First Name is required";
-
+            validationErrors.firstName = "First Name is required.";
         }
 
         if (student.lastName.trim() === "") {
-
-            validationErrors.lastName = "Last Name is required";
-
+            validationErrors.lastName = "Last Name is required.";
         }
 
-        if (!/^[0-9]{10}$/.test(student.mobile)) {
-
-            validationErrors.mobile = "Enter Valid Mobile Number";
-
+        const mobileErr = validateMobile(student.mobile, true);
+        if (mobileErr) {
+            validationErrors.mobile = mobileErr;
         }
 
-        if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(student.email)) {
+        const emailErr = validateEmail(student.email, true);
+        if (emailErr) {
+            validationErrors.email = emailErr;
+        }
 
-            validationErrors.email = "Enter Valid Email";
-
+        if (student.dob) {
+            const dobDate = new Date(student.dob);
+            if (!isNaN(dobDate.getTime()) && dobDate > new Date()) {
+                validationErrors.dob = "Date of Birth cannot be in the future.";
+            }
         }
 
         if (student.courseId === "") {
@@ -411,31 +428,29 @@ function EditStudent() {
 
             </label>
 
-            <select
-
-                className="form-select"
-
-                name="courseId"
-
-                value={student.courseId}
-
-                onChange={handleChange}
-
-            >
-
-                <option value="">Select Course</option>
-
-                <option value="CRS001">MERN Stack</option>
-
-                <option value="CRS002">React JS</option>
-
-                <option value="CRS003">PHP</option>
-
-                <option value="CRS004">Java</option>
-
-                <option value="CRS005">Python</option>
-
-            </select>
+                <select
+                    className="form-select"
+                    name="courseId"
+                    value={student.courseId}
+                    onChange={handleChange}
+                >
+                    <option value="">Select Course</option>
+                    {courses.length > 0 ? (
+                        courses.map((c) => (
+                            <option key={c._id || c.courseId || c.courseCode} value={c.courseCode || c.courseId || c._id}>
+                                {c.courseName || c.name}
+                            </option>
+                        ))
+                    ) : (
+                        <>
+                            <option value="CRS001">MERN Stack</option>
+                            <option value="CRS002">React JS</option>
+                            <option value="CRS003">PHP</option>
+                            <option value="CRS004">Java</option>
+                            <option value="CRS005">Python</option>
+                        </>
+                    )}
+                </select>
 
             {
 
@@ -459,27 +474,27 @@ function EditStudent() {
 
             </label>
 
-            <select
-
-                className="form-select"
-
-                name="batchId"
-
-                value={student.batchId}
-
-                onChange={handleChange}
-
-            >
-
-                <option value="">Select Batch</option>
-
-                <option value="BAT001">Morning</option>
-
-                <option value="BAT002">Evening</option>
-
-                <option value="BAT003">Weekend</option>
-
-            </select>
+                <select
+                    className="form-select"
+                    name="batchId"
+                    value={student.batchId}
+                    onChange={handleChange}
+                >
+                    <option value="">Select Batch</option>
+                    {batches.length > 0 ? (
+                        batches.map((b) => (
+                            <option key={b._id || b.batchId || b.batchCode} value={b.batchCode || b.batchId || b._id}>
+                                {b.batchName || b.name}
+                            </option>
+                        ))
+                    ) : (
+                        <>
+                            <option value="BAT001">Morning</option>
+                            <option value="BAT002">Evening</option>
+                            <option value="BAT003">Weekend</option>
+                        </>
+                    )}
+                </select>
 
             {
 

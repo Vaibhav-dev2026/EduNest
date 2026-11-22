@@ -5,6 +5,7 @@ import { fileURLToPath } from "url";
 import { getDB } from "../config/database.js";
 import { resolveReference, formatDateDDMMYYYY } from "../utils/helpers.js";
 import { emitEvent } from "../services/socketService.js";
+import { validateMobile } from "../utils/validate.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -181,6 +182,15 @@ export async function updateProfile(req, res) {
 
     if (uploadedFile) {
         newPhotoUrl = `/uploads/profiles/${uploadedFile.filename}`;
+    }
+
+    // Backend validation for Profile
+    if (body.firstName !== undefined && String(body.firstName || "").trim() === "") {
+        return res.status(400).json({ success: false, message: "First Name cannot be empty." });
+    }
+    if (body.mobile !== undefined && String(body.mobile || "").trim() !== "") {
+        const mobileErr = validateMobile(body.mobile, false);
+        if (mobileErr) return res.status(400).json({ success: false, message: mobileErr });
     }
 
     // ── Build update object for users collection ──
