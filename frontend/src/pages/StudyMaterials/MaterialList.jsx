@@ -8,7 +8,7 @@ import Table from "../../components/common/Table";
 import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
 
-import { getMaterials, deleteMaterial, getFileUrl } from "../../services/materialService";
+import { getMaterials, deleteMaterial, downloadMaterialFile } from "../../services/materialService";
 import { subscribeToEvents } from "../../services/socketService";
 
 function MaterialList() {
@@ -17,6 +17,8 @@ function MaterialList() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
+    const [downloading, setDownloading] = useState(null);
+    const [downloadError, setDownloadError] = useState(null);
 
     useEffect(() => {
         loadData();
@@ -62,6 +64,18 @@ function MaterialList() {
                 setError("Failed to delete material.");
                 setLoading(false);
             }
+        }
+    }
+
+    async function handleDownload(item) {
+        setDownloading(item._id);
+        setDownloadError(null);
+        try {
+            await downloadMaterialFile(item._id, item.fileName || item.title || "download");
+        } catch (err) {
+            setDownloadError(err.message || "Download failed. Please try again.");
+        } finally {
+            setDownloading(null);
         }
     }
 
@@ -117,6 +131,12 @@ function MaterialList() {
                         <div className="alert alert-success d-flex align-items-center gap-2 mb-4">
                             <i className="bi bi-check-circle-fill"></i>
                             <div>{success}</div>
+                        </div>
+                    )}
+                    {downloadError && (
+                        <div className="alert alert-warning d-flex justify-content-between align-items-center mb-4">
+                            <span><i className="bi bi-exclamation-triangle me-2"></i>{downloadError}</span>
+                            <button className="btn-close" onClick={() => setDownloadError(null)}></button>
                         </div>
                     )}
 
@@ -178,16 +198,18 @@ function MaterialList() {
                                             <td className="text-end">
                                                 <div className="d-inline-flex gap-1">
                                                     {item.fileUrl && !item.fileUrl.startsWith("C:\\") ? (
-                                                        <a
-                                                            href={getFileUrl(item.fileUrl)}
-                                                            target="_blank"
-                                                            rel="noreferrer"
-                                                            download={item.fileName || true}
+                                                        <button
                                                             className="btn btn-sm btn-outline-success"
+                                                            onClick={() => handleDownload(item)}
+                                                            disabled={downloading === item._id}
                                                             title="Download Material"
                                                         >
-                                                            <i className="bi bi-download"></i> Download
-                                                        </a>
+                                                            {downloading === item._id ? (
+                                                                <><i className="bi bi-hourglass-split me-1"></i>Downloading...</>
+                                                            ) : (
+                                                                <><i className="bi bi-download me-1"></i>Download</>
+                                                            )}
+                                                        </button>
                                                     ) : (
                                                         <button
                                                             className="btn btn-sm btn-outline-secondary"

@@ -18,26 +18,40 @@ export async function deleteMaterial(id) {
 
 /**
  * Download a material file via the authenticated streaming endpoint.
- * Uses token in Authorization header (primary) or as query param (fallback).
+ * - Sends token in Authorization header (primary path).
+ * - Falls back to new-tab only for network-level errors (server unreachable),
+ *   NOT for HTTP 4xx/5xx responses (which carry a user-readable error message).
+ * - Throws an Error on failure so the calling component can display the message.
  */
 export async function downloadMaterialFile(id, fileName) {
     if (!id) {
-        alert("Cannot download: Material ID is missing.");
-        return;
+        throw new Error("Cannot download: Material ID is missing.");
     }
 
     const token = getToken();
+    if (!token) {
+        throw new Error("You must be logged in to download files.");
+    }
+
     const url = `${BASE_URL}/materials/${id}/download`;
+    let networkError = false;
 
     try {
-        const response = await fetch(url, {
-            method: "GET",
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
+        let response;
+        try {
+            response = await fetch(url, {
+                method: "GET",
+                headers: { Authorization: `Bearer ${token}` },
+            });
+        } catch (fetchErr) {
+            // Network-level failure (server unreachable, DNS, CORS, etc.)
+            networkError = true;
+            throw fetchErr;
+        }
 
         if (!response.ok) {
-            // Parse the error response for user-friendly message
-            let errMsg = `Download failed (HTTP ${response.status})`;
+            // Parse the backend error message for user-friendly display
+            let errMsg = `Download failed (HTTP ${response.status}).`;
             try {
                 const contentType = response.headers.get("content-type") || "";
                 if (contentType.includes("application/json")) {
@@ -61,15 +75,17 @@ export async function downloadMaterialFile(id, fileName) {
         anchor.click();
         document.body.removeChild(anchor);
         setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
+
     } catch (err) {
         console.error("downloadMaterialFile error:", err);
-        // Fallback: open in a new tab with token as query param (browser-compatible)
-        if (token) {
+        // Fall back to new tab ONLY for genuine network errors, not HTTP errors.
+        if (networkError && token) {
             const fallbackUrl = `${url}?token=${encodeURIComponent(token)}`;
             window.open(fallbackUrl, "_blank");
-        } else {
-            alert(`Download failed: ${err.message || "Unknown error. Please log in and try again."}`);
+            return;
         }
+        // Re-throw so the UI component can show the error in an alert banner.
+        throw err;
     }
 }
 
